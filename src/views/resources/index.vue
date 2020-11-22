@@ -26,15 +26,6 @@
         @click="handleFilter"
         >搜索</el-button
       >
-      <el-button
-        v-waves
-        :loading="downloadLoading"
-        class="filter-item"
-        type="primary"
-        icon="el-icon-download"
-        @click="handleDownload"
-        >导出</el-button
-      >
     </div>
 
     <el-table
@@ -120,16 +111,16 @@
         class-name="small-padding fixed-width"
       >
         <template slot-scope="{ row }">
-          <el-button size="mini" type="success" @click="historyThis"
+          <el-button size="mini" type="success" @click="historyThis(row)"
             >历史</el-button
           >
-          <el-button size="mini" type="primary" @click="detailThis"
+          <el-button size="mini" type="primary" @click="detailThis(row)"
             >查阅</el-button
           >
-          <el-button size="mini" type="primary" @click="passThis"
+          <el-button size="mini" type="primary" @click="passThis(row)"
             >通过</el-button
           >
-          <el-button size="mini" type="danger" @click="backThis"
+          <el-button size="mini" type="danger" @click="backThis(row)"
             >驳回</el-button
           >
         </template>
@@ -142,250 +133,36 @@
       :limit.sync="listQuery.limit"
       @pagination="getList"
     />
-
-    <el-dialog :title="'历史记录'" :visible.sync="isAddModal" width="600px">
-      <el-form
-        ref="addForm"
-        :rules="rules"
-        :model="addFormData"
-        label-position="left"
-        label-width="80px"
-        style="width: 400px; margin-left: 50px"
-      >
-        <el-form-item label="用户编号" prop="userNo">
-          <el-input
-            v-model="addFormData.userNo"
-            placeholder="编号"
-            class="filter-item"
-          />
-        </el-form-item>
-        <el-form-item label="用户账号" prop="account">
-          <el-input
-            v-model="addFormData.account"
-            placeholder="账号"
-            class="filter-item"
-          />
-        </el-form-item>
-        <el-form-item label="用户密码" prop="password">
-          <el-input
-            v-model="addFormData.password"
-            placeholder="密码"
-            class="filter-item"
-          />
-        </el-form-item>
-        <el-form-item label="用户姓名" prop="name">
-          <el-input
-            v-model="addFormData.name"
-            maxlength="40"
-            placeholder="姓名"
-            class="filter-item"
-          />
-        </el-form-item>
-        <el-form-item label="用户头像" prop="logo">
-          <el-upload
-            class="avatar-uploader"
-            action="/api/uploadFile"
-            :data="{ type: 'logo' }"
-            :show-file-list="false"
-            :on-success="handleAvatarSuccess"
-            :before-upload="beforeAvatarUpload"
-          >
-            <img
-              v-if="addFormData.logo"
-              :src="addFormData.logo"
-              class="avatar"
-            />
-            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-          </el-upload>
-        </el-form-item>
-        <div style="display: flex">
-          <el-form-item label="用户性别" prop="gender" style="width: 50%">
-            <el-select
-              v-model="addFormData.gender"
-              placeholder="用户性别"
-              clearable
-              class="filter-item"
-            >
-              <el-option
-                v-for="(item, i) in genderList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            style="margin-left: 10px; width: 50%"
-            label="手机号"
-            prop="phone"
-          >
-            <el-input
-              v-model="addFormData.phone"
-              placeholder="手机号"
-              class="filter-item"
-            />
-          </el-form-item>
-        </div>
-        <div style="display: flex">
-          <el-form-item label="用户类型" prop="type" style="width: 50%">
-            <el-select
-              v-model="addFormData.type"
-              placeholder="用户类型"
-              clearable
-              class="filter-item"
-            >
-              <el-option
-                v-for="(item, i) in typeList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            style="margin-left: 10px; width: 50%"
-            label="禁/启用"
-            prop="status"
-          >
-            <el-select
-              v-model="addFormData.status"
-              placeholder="禁/启用状态"
-              clearable
-              class="filter-item"
-            >
-              <el-option
-                v-for="(item, i) in statusList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-        </div>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="isAddModal = false">取消</el-button>
-        <el-button type="primary" @click="submit('add')">确定</el-button>
-      </div>
+    <el-dialog title="历史记录" :visible.sync="historyModal" width="600px">
+      <el-timeline>
+        <el-timeline-item
+          v-for="(history, index) in historyList"
+          :key="index"
+          :type="history.type"
+          :timestamp="history.createTime"
+        >
+          {{ history.content }}
+        </el-timeline-item>
+      </el-timeline>
     </el-dialog>
-    <el-dialog :title="'编辑用户'" :visible.sync="isEditModal" width="600px">
-      <el-form
-        ref="editForm"
-        :rules="rules"
-        :model="editFormData"
-        label-position="left"
-        label-width="80px"
-        style="width: 400px; margin-left: 50px"
+    <el-dialog title="资源详情" :visible.sync="detailModal" width="600px">
+      <book-detail :bookData="modalData" :isShowHistory="true"></book-detail>
+    </el-dialog>
+    <el-dialog title="驳回批示信息录入" :visible.sync="backModal" width="600px">
+      <el-input
+        type="textarea"
+        :rows="4"
+        maxlength="200"
+        show-word-limit
+        placeholder="请输入驳回意见"
+        v-model="backInfo"
       >
-        <el-form-item label="用户编号" prop="userNo">
-          <el-input
-            :disabled="true"
-            v-model="editFormData.userNo"
-            placeholder="编号"
-            class="filter-item"
-          />
-        </el-form-item>
-        <el-form-item label="用户账号" prop="account">
-          <el-input
-            :disabled="true"
-            v-model="editFormData.account"
-            placeholder="账号"
-            class="filter-item"
-          />
-        </el-form-item>
-        <el-form-item label="用户姓名" prop="name">
-          <el-input
-            v-model="editFormData.name"
-            maxlength="40"
-            placeholder="姓名"
-            class="filter-item"
-          />
-        </el-form-item>
-        <el-form-item label="用户头像" prop="name">
-          <el-upload
-            class="avatar-uploader"
-            action="/api/uploadFile"
-            :data="{ type: 'logo' }"
-            :show-file-list="false"
-            :on-success="handleAvatarSuccess"
-            :before-upload="beforeAvatarUpload"
-          >
-            <img
-              v-if="editFormData.logo"
-              :src="editFormData.logo"
-              class="avatar"
-            />
-            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-          </el-upload>
-        </el-form-item>
-        <div style="display: flex">
-          <el-form-item label="用户性别" prop="gender" style="width: 50%">
-            <el-select
-              v-model="editFormData.gender"
-              placeholder="用户性别"
-              clearable
-              class="filter-item"
-            >
-              <el-option
-                v-for="(item, i) in genderList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            style="margin-left: 10px; width: 50%"
-            label="手机号"
-            prop="phone"
-          >
-            <el-input
-              v-model="editFormData.phone"
-              placeholder="手机号"
-              class="filter-item"
-            />
-          </el-form-item>
-        </div>
-        <div style="display: flex">
-          <el-form-item label="用户类型" prop="type" style="width: 50%">
-            <el-select
-              v-model="editFormData.type"
-              placeholder="用户类型"
-              clearable
-              class="filter-item"
-            >
-              <el-option
-                v-for="(item, i) in typeList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            style="margin-left: 10px; width: 50%"
-            label="禁/启用"
-            prop="tystatuspe"
-          >
-            <el-select
-              v-model="editFormData.status"
-              placeholder="禁/启用状态"
-              clearable
-              class="filter-item"
-            >
-              <el-option
-                v-for="(item, i) in statusList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-        </div>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="isEditModal = false">取消</el-button>
-        <el-button type="primary" @click="submit('edit')">确定</el-button>
+      </el-input>
+      <div slot="footer">
+        <el-button type="primary" size="small" @click="confirmBack"
+          >确定</el-button
+        >
+        <el-button size="small" @click="backModal = false">取消</el-button>
       </div>
     </el-dialog>
   </div>
@@ -480,221 +257,86 @@ export default {
         title: undefined,
         type: undefined,
       },
-      downloadLoading: false,
-      typeList: [
-        { label: "全部", value: "" },
-        { label: "工作人员", value: 1 },
-        { label: "教师", value: 2 },
-      ],
-      statusList: [
-        { label: "全部", value: "" },
-        { label: "启用", value: 1 },
-        { label: "禁用", value: 0 },
-      ],
-      genderList: [
-        { label: "全部", value: "" },
-        { label: "男", value: 1 },
-        { label: "女", value: 2 },
-      ],
       // 弹窗中的数据
-      isAddModal: false,
-      isEditModal: false,
-      rules: {
-        userNo: [
-          { required: true, message: "用户编号不能为空" },
-          { trigger: "blur", validator: validateUserNo },
-        ],
-        account: [
-          { required: true, message: "用户账号不能为空" },
-          { trigger: "blur", validator: validateUsername },
-        ],
-        password: [
-          { required: true, message: "用户密码不能为空" },
-          { trigger: "blur", validator: validatePassword },
-        ],
-        name: [{ required: true, message: "用户名称不能为空" }],
-        type: [{ required: true, message: "用户类型不能为空" }],
-        phone: [
-          { required: true, message: "联系电话不能为空" },
-          { trigger: "blur", validator: validatePhone },
-        ],
-        status: [{ required: true, message: "禁启用状态不能为空" }],
-        gender: [{ required: true, message: "用户性别不能为空" }],
-      },
-      addFormData: { logo: "" },
-      imageUrl: "",
-      editFormData: { logo: "" },
+      rules: {},
+      modalData: {},
+      historyModal: false,
+      historyList: [],
+      detailModal: false,
+      backModal: false,
+      backInfo: "",
     };
   },
-  components: { Pagination },
+  components: {
+    Pagination,
+    "book-detail": () => import("@/components/View/BooksDetail/index"),
+  },
   directives: { waves },
   created() {
     this.getList();
   },
   filters: {},
   methods: {
-    submit(type) {
-      this.$refs[`${type}Form`].validate((valid) => {
-        if (valid) {
-          this[`${type}Submit`]();
-        } else {
-          return false;
-        }
-      });
+    historyThis(row) {
+      this.historyModal = true;
+      this.historyList = [
+        {
+          content: "包含敏感信息或广告, 予以删除",
+          createTime: "2020-11-21 20:46",
+          type: "danger",
+        },
+        {
+          content: "资料缺失",
+          createTime: "2018-04-03 20:46",
+          type: "danger",
+        },
+        {
+          content: "标题违规",
+          createTime: "2018-04-03 20:46",
+          type: "danger",
+        },
+        {
+          content: "信息不充分",
+          createTime: "2018-04-03 20:46",
+          type: "danger",
+        },
+      ];
     },
-    addSubmit() {
-      this.$post("/api/users/add", this.addFormData)
-        .then((res) => {
-          if (res.code != 200) {
-            return this.$notify({
-              title: "失败",
-              message: res.message,
-              type: "error",
-            });
-          }
-          this.$refs.addForm.resetFields();
-          this.isAddModal = false;
-          this.$notify({
-            title: "提示",
-            message: res.message,
-            type: "success",
-          });
-          this.getList();
-        })
-        .catch((err) => {
-          this.isAddModal = false;
-          this.$message({
-            message: "网络错误，请稍后再试",
-            type: "warning",
-          });
-        });
+    detailThis(row) {
+      this.detailModal = true;
+      this.modalData = {
+        poster:
+          "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif",
+        bookName: "钢铁是怎样炼成的",
+        createTime: new Date(),
+        author: "李大壮",
+        publishOrgName: "中国人民出版社",
+      };
     },
-    editSubmit() {
-      this.$post("/api/users/edit", this.editFormData)
-        .then((res) => {
-          if (res.code != 200) {
-            return this.$notify({
-              title: "失败",
-              message: res.message,
-              type: "error",
-            });
-          }
-          this.$refs.editForm.resetFields();
-          this.isEditModal = false;
-          this.$notify({
-            title: "提示",
-            message: res.message,
-            type: "success",
-          });
-          this.getList();
-        })
-        .catch((err) => {
-          this.isEditModal = false;
-          this.$message({
-            message: "网络错误，请稍后再试",
-            type: "warning",
-          });
-        });
-    },
-    deleteThis(row) {
-      this.$confirm("此操作将删除该用户, 是否继续?", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
+    passThis(row) {
+      this.$confirm("是否通过审核", "提示", {
+        confirmButtonText: "是",
+        cancelButtonText: "否",
         type: "warning",
       })
         .then(() => {
-          this.$post("/api/users/delete", { id: row.id })
-            .then((res) => {
-              if (res.code != 200) {
-                return this.$notify({
-                  title: "失败",
-                  message: res.message,
-                  type: "error",
-                });
-              }
-              this.isEditModal = false;
-              this.$notify({
-                title: "提示",
-                message: res.message,
-                type: "success",
-              });
-              this.getList();
-            })
-            .catch((err) => {
-              this.isEditModal = false;
-              this.$message({
-                message: "网络错误，请稍后再试",
-                type: "warning",
-              });
-            });
+          this.$message.success("审核通过");
+          this.getList();
         })
         .catch(() => {
-          this.$message({
-            type: "info",
-            message: "已取消删除",
-          });
+          this.$message.info("操作取消");
         });
     },
-    editThis(row) {
-      var newObj = Object.assign({}, row);
-      this.editFormData = newObj;
-      this.isEditModal = true;
+    backThis(row) {
+      this.backModal = true;
+      this.modalData = row;
     },
-    passwordReset(row) {
-      this.$post("/api/users/resetPassword", {
-        id: row.id,
-      })
-        .then((res) => {
-          if (res.code != 200) {
-            return this.$notify({
-              title: "失败",
-              message: res.message,
-              type: "error",
-            });
-          }
-          this.$notify({
-            title: "提示",
-            dangerouslyUseHTMLString: true,
-            message: `${res.message}<span style="color:#f22424">${res.data}</span>`,
-            type: "success",
-          });
-        })
-        .catch((err) => {
-          this.$message({
-            message: "网络错误，请稍后再试",
-            type: "warning",
-          });
-          console.log(err);
-        });
+    confirmBack() {
+      this.$message.success("资源驳回成功");
+      this.backModal = false;
+      this.getList();
     },
-    changeStatus(row, status) {
-      this.$post("/api/users/openOrForbid", {
-        id: row.id,
-        status: status,
-      })
-        .then((res) => {
-          if (res.code != 200) {
-            return this.$notify({
-              title: "失败",
-              message: res.message,
-              type: "error",
-            });
-          }
-          this.$notify({
-            title: "提示",
-            message: res.message,
-            type: "success",
-          });
-          row.status = res.data;
-        })
-        .catch((err) => {
-          this.$message({
-            message: "网络错误，请稍后再试",
-            type: "warning",
-          });
-          console.log(err);
-        });
-    },
+
     handleFilter() {
       this.listQuery.page = 1;
       this.getList();
@@ -727,57 +369,6 @@ export default {
           console.log(err);
         });
     },
-    handleDownload() {
-      this.downloadLoading = true;
-      import("@/vendor/Export2Excel").then((excel) => {
-        const tHeader = [
-          "用户类型",
-          "禁启用状态",
-          "用户编号",
-          "用户姓名",
-          "用户性别",
-          "头像地址",
-          "用户账号",
-          "手机号",
-          "注册时间",
-        ];
-        const filterVal = [
-          "type",
-          "status",
-          "userNo",
-          "name",
-          "gender",
-          "logo",
-          "account",
-          "phone",
-          "createTime",
-        ];
-        const data = this.formatJson(filterVal);
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-          filename: "用户信息表",
-        });
-        this.downloadLoading = false;
-      });
-    },
-    formatJson(filterVal) {
-      return this.list.map((v) =>
-        filterVal.map((j) => {
-          if (j === "createTime") {
-            return parseTime(v[j]);
-          } else if (j === "type") {
-            return v[j] == 0 ? "超级管理员" : v[j] == 1 ? "工作人员" : "教师";
-          } else if (j === "status") {
-            return v[j] == 0 ? "禁用" : "启用";
-          } else if (j === "gender") {
-            return v[j] == 0 ? "男" : "女";
-          } else {
-            return v[j];
-          }
-        })
-      );
-    },
     handleAvatarSuccess(res, file) {
       this.$nextTick(() => {
         this.isAddModal
@@ -789,12 +380,23 @@ export default {
       const isLt2M = file.size / 1024 / 1024 < 1;
 
       if (!isLt2M) {
-        this.$message.error("上传头像图片大小不能超过 1MB!");
+        this.$message.error("上传预览图大小不能超过 1MB!");
       }
       return isLt2M;
     },
   },
   mounted() {},
+  watch: {
+    historyModal(newV) {
+      if (!newV) this.modalData = {};
+    },
+    detailModal(newV) {
+      if (!newV) this.modalData = {};
+    },
+    backModal(newV) {
+      if (!newV) (this.modalData = {}), (this.backInfo = "");
+    },
+  },
 };
 </script>
 

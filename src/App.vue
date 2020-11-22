@@ -6,6 +6,16 @@
 
 <script>
 export default {
-  name: 'App'
-}
+  name: "App",
+};
 </script>
+
+<style lang="scss">
+.el-dialog__header {
+  border-bottom: 1px solid #ccc;
+}
+.el-dialog__body {
+  max-height: 70vh;
+  overflow: auto;
+}
+</style>
