@@ -1,362 +1,124 @@
 <template>
   <div class="app-container">
-    <div class="filter-container">
-      <el-input
-        v-model="listQuery.userNo"
-        placeholder="编号"
-        style="width: 150px;"
-        class="filter-item"
-        @keyup.enter.native="handleFilter"
+    <el-collapse v-model="activeNames" @change="handleChange">
+      <el-collapse-item title="热搜榜" name="1">
+        <div class="hot">
+          <el-row>
+            <el-col v-for="(o, index) in 4" :key="o" :span="6" class="hot-col">
+              <el-card :body-style="{ padding: '0px' }">
+                <div class="card-info-wrapper">
+                  <div class="image">
+                    <img
+                      src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
+                      class="image"
+                    >
+                  </div>
+                  <div style="padding: 14px">
+                    <span>好吃的汉堡</span>
+                    <div class="bottom clearfix">
+                      <time class="time">{{
+                        new Date().toLocaleString()
+                      }}</time>
+                    </div>
+                  </div>
+                  <div class="btns">
+                    <div class="btns-wrapper">
+                      <el-button
+                        size="mini"
+                        type="primary"
+                        @click="detailThis(item)"
+                      >查看</el-button>
+                      <el-button
+                        size="mini"
+                        type="primary"
+                        @click="rendThis(item)"
+                      >借阅</el-button>
+                      <el-button
+                        size="mini"
+                        type="success"
+                        @click="downloadThis(item)"
+                      >下载</el-button>
+                    </div>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+          </el-row>
+        </div>
+      </el-collapse-item>
+      <el-collapse-item title="为您推荐" name="2">
+        <div class="recommend">
+          <el-row>
+            <el-col v-for="(o, index) in 4" :key="o" :span="6" class="hot-col">
+              <el-card :body-style="{ padding: '0px' }">
+                <div class="card-info-wrapper">
+                  <div class="image">
+                    <img
+                      src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
+                      class="image"
+                    >
+                  </div>
+                  <div style="padding: 14px">
+                    <span>好吃的汉堡</span>
+                    <div class="bottom clearfix">
+                      <time class="time">{{
+                        new Date().toLocaleString()
+                      }}</time>
+                    </div>
+                  </div>
+                  <div class="btns">
+                    <div class="btns-wrapper">
+                      <el-button
+                        size="mini"
+                        type="primary"
+                        @click="detailThis(item)"
+                      >查看</el-button>
+                      <el-button
+                        size="mini"
+                        type="primary"
+                        @click="rendThis(item)"
+                      >借阅</el-button>
+                      <el-button
+                        size="mini"
+                        type="success"
+                        @click="downloadThis(item)"
+                      >下载</el-button>
+                    </div>
+                  </div>
+                </div>
+              </el-card>
+            </el-col>
+          </el-row>
+        </div>
+      </el-collapse-item>
+      <el-collapse-item title="图书检索" name="3">
+        <book-search :is-show-delete="false" :is-show-history="false">
+          <template slot="tableSlot">
+            <el-table-column label="上传时间" width="150px" align="center">
+              <template slot-scope="{ row }">
+                <span>{{
+                  row.createTime | parseTime("{y}-{m}-{d} {h}:{i}:{s}")
+                }}</span>
+              </template>
+            </el-table-column>
+          </template>
+        </book-search>
+      </el-collapse-item>
+    </el-collapse>
+    <el-dialog title="资源详情" :visible.sync="detailModal" width="600px">
+      <book-detail
+        :book-data="modalData"
+        :is-show-history="false"
+        @closeModal="detailModal = false"
       />
-      <el-input
-        v-model="listQuery.name"
-        placeholder="姓名"
-        style="width: 150px;"
-        class="filter-item"
-        @keyup.enter.native="handleFilter"
+    </el-dialog>
+    <template v-if="rendModal">
+      <detail-frame
+        :modal="rendModal"
+        :modal-data="modalData"
+        @closeModal="rendModal = false"
       />
-      <el-select
-        v-model="listQuery.status"
-        placeholder="禁/启用状态"
-        clearable
-        style="width: 150px"
-        class="filter-item"
-      >
-        <el-option
-          v-for="(item, i) in statusList"
-          :key="i"
-          :label="item.label"
-          :value="item.value"
-        />
-      </el-select>
-      <el-select
-        v-model="listQuery.type"
-        placeholder="用户类型"
-        clearable
-        class="filter-item"
-        style="width: 150px"
-      >
-        <el-option v-for="(item, i) in typeList" :key="i" :label="item.label" :value="item.value" />
-      </el-select>
-      <el-select
-        v-model="listQuery.gender"
-        placeholder="用户性别"
-        clearable
-        class="filter-item"
-        style="width: 150px"
-      >
-        <el-option
-          v-for="(item, i) in genderList"
-          :key="i"
-          :label="item.label"
-          :value="item.value"
-        />
-      </el-select>
-      <el-button
-        v-waves
-        class="filter-item"
-        type="primary"
-        icon="el-icon-search"
-        @click="handleFilter"
-      >搜索</el-button>
-      <el-button
-        class="filter-item"
-        style="margin-left: 10px;"
-        type="primary"
-        icon="el-icon-edit"
-        @click="isAddModal = true"
-      >添加</el-button>
-      <el-button
-        v-waves
-        :loading="downloadLoading"
-        class="filter-item"
-        type="primary"
-        icon="el-icon-download"
-        @click="handleDownload"
-      >导出</el-button>
-    </div>
-
-    <el-table
-      :key="tableKey"
-      v-loading="listLoading"
-      :data="list"
-      border
-      fit
-      highlight-current-row
-      style="width: 100%;"
-    >
-      <el-table-column align="center" label="序号" width="80px">
-        <template slot-scope="{$index}">
-          <span>{{(listQuery.page - 1) * (listQuery.limit) + $index + 1 }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="编号" width="200px">
-        <template slot-scope="{row}">
-          <span>{{ row.userNo }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="类型" width="150px">
-        <template slot-scope="{row}">
-          <span>{{ row.type | typeFilter }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="状态" class-name="status-col" width="150px">
-        <template slot-scope="{row}">
-          <el-tag :type="row.status == 1 ? 'success' : 'danger'">{{ row.status == 1 ? '启用' : '禁用'}}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="账号" width="150px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.account }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column :show-overflow-tooltip="true" label="姓名" width="150px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.name }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="性别" align="center" width="80px">
-        <template slot-scope="{row}">
-          <span>{{ row.gender | genderFilter }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="头像" align="center" width="120px">
-        <template slot-scope="{row}">
-          <span>
-            <el-image
-              v-if="row.logo"
-              style="width:50px;height:50px;"
-              :src="row.logo"
-              lazy
-              :preview-src-list="[row.logo]"
-            ></el-image>
-            <span v-else>-</span>
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column label="注册时间" width="150px" align="center">
-        <template slot-scope="{row}">
-          <span>{{ row.createTime | parseTime('{y}-{m}-{d} {h}:{i}:{s}') }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="操作" align="center" width="350" class-name="small-padding fixed-width">
-        <template slot-scope="{row}">
-          <el-button
-            v-if="row.status!='published'"
-            size="mini"
-            type="success"
-            @click="passwordReset(row)"
-          >重置密码</el-button>
-          <el-button
-            v-if="row.status!='published'"
-            size="mini"
-            :type="row.status == 1 ? 'warning' : 'success'"
-            @click="changeStatus(row,row.status)"
-          >{{ row.status == 1 ? '禁用' : '启用' }}</el-button>
-          <el-button type="primary" size="mini" @click="editThis(row)">编辑</el-button>
-          <el-button
-            v-if="row.status!='deleted'"
-            size="mini"
-            type="danger"
-            @click="deleteThis(row)"
-          >删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <pagination
-      v-show="total>0"
-      :total="total"
-      :page.sync="listQuery.page"
-      :limit.sync="listQuery.limit"
-      @pagination="getList"
-    />
-
-    <el-dialog :title="'添加用户'" :visible.sync="isAddModal" width="600px">
-      <el-form
-        ref="addForm"
-        :rules="rules"
-        :model="addFormData"
-        label-position="left"
-        label-width="80px"
-        style="width: 400px;margin-left: 50px;"
-      >
-        <el-form-item label="用户编号" prop="userNo">
-          <el-input v-model="addFormData.userNo" placeholder="编号" class="filter-item" />
-        </el-form-item>
-        <el-form-item label="用户账号" prop="account">
-          <el-input v-model="addFormData.account" placeholder="账号" class="filter-item" />
-        </el-form-item>
-        <el-form-item label="用户密码" prop="password">
-          <el-input v-model="addFormData.password" placeholder="密码" class="filter-item" />
-        </el-form-item>
-        <el-form-item label="用户姓名" prop="name">
-          <el-input v-model="addFormData.name" maxlength="40" placeholder="姓名" class="filter-item" />
-        </el-form-item>
-        <el-form-item label="用户头像" prop="logo">
-          <el-upload
-            class="avatar-uploader"
-            action="/api/uploadFile"
-            :data="{type:'logo'}"
-            :show-file-list="false"
-            :on-success="handleAvatarSuccess"
-            :before-upload="beforeAvatarUpload"
-          >
-            <img v-if="addFormData.logo" :src="addFormData.logo" class="avatar" />
-            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-          </el-upload>
-        </el-form-item>
-        <div style="display:flex">
-          <el-form-item label="用户性别" prop="gender" style="width:50%">
-            <el-select
-              v-model="addFormData.gender"
-              placeholder="用户性别"
-              clearable
-              class="filter-item"
-            >
-              <el-option
-                v-for="(item, i) in genderList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item style="margin-left:10px;width:50%" label="手机号" prop="phone">
-            <el-input v-model="addFormData.phone" placeholder="手机号" class="filter-item" />
-          </el-form-item>
-        </div>
-        <div style="display:flex">
-          <el-form-item label="用户类型" prop="type" style="width:50%">
-            <el-select v-model="addFormData.type" placeholder="用户类型" clearable class="filter-item">
-              <el-option
-                v-for="(item, i) in typeList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item style="margin-left:10px;width:50%" label="禁/启用" prop="status">
-            <el-select
-              v-model="addFormData.status"
-              placeholder="禁/启用状态"
-              clearable
-              class="filter-item"
-            >
-              <el-option
-                v-for="(item, i) in statusList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-        </div>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="isAddModal = false">取消</el-button>
-        <el-button type="primary" @click="submit('add')">确定</el-button>
-      </div>
-    </el-dialog>
-    <el-dialog :title="'编辑用户'" :visible.sync="isEditModal" width="600px">
-      <el-form
-        ref="editForm"
-        :rules="rules"
-        :model="editFormData"
-        label-position="left"
-        label-width="80px"
-        style="width: 400px;margin-left: 50px;"
-      >
-        <el-form-item label="用户编号" prop="userNo">
-          <el-input
-            :disabled="true"
-            v-model="editFormData.userNo"
-            placeholder="编号"
-            class="filter-item"
-          />
-        </el-form-item>
-        <el-form-item label="用户账号" prop="account">
-          <el-input
-            :disabled="true"
-            v-model="editFormData.account"
-            placeholder="账号"
-            class="filter-item"
-          />
-        </el-form-item>
-        <el-form-item label="用户姓名" prop="name">
-          <el-input
-            v-model="editFormData.name"
-            maxlength="40"
-            placeholder="姓名"
-            class="filter-item"
-          />
-        </el-form-item>
-        <el-form-item label="用户头像" prop="name">
-          <el-upload
-            class="avatar-uploader"
-            action="/api/uploadFile"
-            :data="{type:'logo'}"
-            :show-file-list="false"
-            :on-success="handleAvatarSuccess"
-            :before-upload="beforeAvatarUpload"
-          >
-            <img v-if="editFormData.logo" :src="editFormData.logo" class="avatar" />
-            <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-          </el-upload>
-        </el-form-item>
-        <div style="display:flex">
-          <el-form-item label="用户性别" prop="gender" style="width:50%">
-            <el-select
-              v-model="editFormData.gender"
-              placeholder="用户性别"
-              clearable
-              class="filter-item"
-            >
-              <el-option
-                v-for="(item, i) in genderList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item style="margin-left:10px;width:50%" label="手机号" prop="phone">
-            <el-input v-model="editFormData.phone" placeholder="手机号" class="filter-item" />
-          </el-form-item>
-        </div>
-        <div style="display:flex">
-          <el-form-item label="用户类型" prop="type" style="width:50%">
-            <el-select v-model="editFormData.type" placeholder="用户类型" clearable class="filter-item">
-              <el-option
-                v-for="(item, i) in typeList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item style="margin-left:10px;width:50%" label="禁/启用" prop="tystatuspe">
-            <el-select
-              v-model="editFormData.status"
-              placeholder="禁/启用状态"
-              clearable
-              class="filter-item"
-            >
-              <el-option
-                v-for="(item, i) in statusList"
-                :key="i"
-                :label="item.label"
-                :value="item.value"
-              />
-            </el-select>
-          </el-form-item>
-        </div>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="isEditModal = false">取消</el-button>
-        <el-button type="primary" @click="submit('edit')">确定</el-button>
-      </div>
-    </el-dialog>
+    </template>
   </div>
 </template>
 <script>
@@ -365,42 +127,22 @@ import {
   validPhone,
   validUserNo,
   validPassword
-} from "@/utils/validate";
-import waves from "@/directive/waves"; // waves directive
-import { parseTime } from "@/utils";
-import Pagination from "@/components/Pagination"; // secondary package based on el-pagination
+} from '@/utils/validate'
+import waves from '@/directive/waves' // waves directive
+import { parseTime } from '@/utils'
+import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 export default {
-  name: "User",
+  name: 'User',
+  components: {
+    Pagination,
+    'book-search': () => import('@/components/View/Book/search'),
+    'book-detail': () => import('@/components/View/Book/detail'),
+    'book-add-edit': () => import('@/components/View/Book/index'),
+    'detail-frame': () => import('@/components/View/detailFrame')
+  },
+  directives: { waves },
+  filters: {},
   data() {
-    const validateUserNo = (rule, value, callback) => {
-      if (!validUserNo(value)) {
-        callback(new Error("编号由8～20位数字组成，请检查编号"));
-      } else {
-        callback();
-      }
-    };
-    const validatePhone = (rule, value, callback) => {
-      if (!value) return callback();
-      if (!validPhone(value)) {
-        callback(new Error("手机号格式不正确，请检查手机号"));
-      } else {
-        callback();
-      }
-    };
-    const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
-        new Error("用户名由字母开头，长度8～20的数字、字母组成，请检查用户名");
-      } else {
-        callback();
-      }
-    };
-    const validatePassword = (rule, value, callback) => {
-      if (!validPassword(value)) {
-        callback(new Error("密码由8～20位数字、字母组成，请检查格式"));
-      } else {
-        callback();
-      }
-    };
     return {
       tableKey: 0,
       list: [],
@@ -414,355 +156,210 @@ export default {
         type: undefined
       },
       downloadLoading: false,
-      typeList: [
-        { label: "全部", value: "" },
-        { label: "工作人员", value: 1 },
-        { label: "教师", value: 2 }
-      ],
-      statusList: [
-        { label: "全部", value: "" },
-        { label: "启用", value: 1 },
-        { label: "禁用", value: 0 }
-      ],
-      genderList: [
-        { label: "全部", value: "" },
-        { label: "男", value: 1 },
-        { label: "女", value: 2 }
-      ],
-      // 弹窗中的数据
-      isAddModal: false,
-      isEditModal: false,
-      rules: {
-        userNo: [
-          { required: true, message: "用户编号不能为空" },
-          { trigger: "blur", validator: validateUserNo }
-        ],
-        account: [
-          { required: true, message: "用户账号不能为空" },
-          { trigger: "blur", validator: validateUsername }
-        ],
-        password: [
-          { required: true, message: "用户密码不能为空" },
-          { trigger: "blur", validator: validatePassword }
-        ],
-        name: [{ required: true, message: "用户名称不能为空" }],
-        type: [{ required: true, message: "用户类型不能为空" }],
-        phone: [
-          { required: true, message: "联系电话不能为空" },
-          { trigger: "blur", validator: validatePhone }
-        ],
-        status: [{ required: true, message: "禁启用状态不能为空" }],
-        gender: [{ required: true, message: "用户性别不能为空" }]
-      },
-      addFormData: { logo: "" },
-      imageUrl: "",
-      editFormData: { logo: "" }
-    };
-  },
-  components: { Pagination },
-  directives: { waves },
-  created() {
-    this.getList();
-  },
-  filters: {
-    typeFilter(data) {
-      return data == 0 ? "超级管理员" : data == 1 ? "工作人员" : "教师";
-    },
-    statusFilter(data) {
-      return data == 0 ? "禁用" : "启用";
-    },
-    genderFilter(data) {
-      return data == 1 ? "男" : "女";
+      activeNames: ['3'],
+      isShowHistory: false,
+      isShowAdd: false,
+      modalData: {},
+      detailModal: false,
+      rendModal: false,
+      formData: {}
     }
   },
+  watch: {
+    rendModal(newV) {
+      if (!newV) this.modalData = {}
+    },
+    detailModal(newV) {
+      if (!newV) this.modalData = {}
+    }
+  },
+  created() {
+    this.getList()
+  },
+  mounted() {},
   methods: {
-    submit(type) {
-      this.$refs[`${type}Form`].validate(valid => {
-        if (valid) {
-          this[`${type}Submit`]();
-        } else {
-          return false;
+    handleChange(val) {
+      console.log(val)
+    },
+    detailThis(row) {
+      this.detailModal = true
+      this.modalData = row
+    },
+    rendThis(row) {
+      this.rendModal = true
+      this.modalData = row
+    },
+    downloadThis(row) {
+      this.$confirm(
+        '您确认下载当资源么, 下载记录将在"下载记录"菜单中展示',
+        '提示',
+        {
+          cancelButtonText: '取消',
+          confirmButtonText: '确定',
+          type: 'info'
         }
-      });
-    },
-    addSubmit() {
-      this.$post("/api/users/add", this.addFormData)
-        .then(res => {
-          if (res.code != 200) {
-            return this.$notify({
-              title: "失败",
-              message: res.message,
-              type: "error"
-            });
-          }
-          this.$refs.addForm.resetFields();
-          this.isAddModal = false;
-          this.$notify({
-            title: "提示",
-            message: res.message,
-            type: "success"
-          });
-          this.getList();
-        })
-        .catch(err => {
-          this.isAddModal = false;
-          this.$message({
-            message: "网络错误，请稍后再试",
-            type: "warning"
-          });
-        });
-    },
-    editSubmit() {
-      this.$post("/api/users/edit", this.editFormData)
-        .then(res => {
-          if (res.code != 200) {
-            return this.$notify({
-              title: "失败",
-              message: res.message,
-              type: "error"
-            });
-          }
-          this.$refs.editForm.resetFields();
-          this.isEditModal = false;
-          this.$notify({
-            title: "提示",
-            message: res.message,
-            type: "success"
-          });
-          this.getList();
-        })
-        .catch(err => {
-          this.isEditModal = false;
-          this.$message({
-            message: "网络错误，请稍后再试",
-            type: "warning"
-          });
-        });
-    },
-    deleteThis(row) {
-      this.$confirm("此操作将删除该用户, 是否继续?", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning"
-      })
-        .then(() => {
-          this.$post("/api/users/delete", { id: row.id })
-            .then(res => {
-              if (res.code != 200) {
-                return this.$notify({
-                  title: "失败",
-                  message: res.message,
-                  type: "error"
-                });
-              }
-              this.isEditModal = false;
-              this.$notify({
-                title: "提示",
-                message: res.message,
-                type: "success"
-              });
-              this.getList();
-            })
-            .catch(err => {
-              this.isEditModal = false;
-              this.$message({
-                message: "网络错误，请稍后再试",
-                type: "warning"
-              });
-            });
+      )
+        .then((res) => {
+          this.$message.success('下载成功')
         })
         .catch(() => {
-          this.$message({
-            type: "info",
-            message: "已取消删除"
-          });
-        });
-    },
-    editThis(row) {
-      var newObj = Object.assign({}, row);
-      this.editFormData = newObj;
-      this.isEditModal = true;
-    },
-    passwordReset(row) {
-      this.$post("/api/users/resetPassword", {
-        id: row.id
-      })
-        .then(res => {
-          if (res.code != 200) {
-            return this.$notify({
-              title: "失败",
-              message: res.message,
-              type: "error"
-            });
-          }
-          this.$notify({
-            title: "提示",
-            dangerouslyUseHTMLString: true,
-            message: `${res.message}<span style="color:#f22424">${res.data}</span>`,
-            type: "success"
-          });
+          this.$message.info('取消下载')
         })
-        .catch(err => {
-          this.$message({
-            message: "网络错误，请稍后再试",
-            type: "warning"
-          });
-          console.log(err);
-        });
-    },
-    changeStatus(row, status) {
-      this.$post("/api/users/openOrForbid", {
-        id: row.id,
-        status: status
-      })
-        .then(res => {
-          if (res.code != 200) {
-            return this.$notify({
-              title: "失败",
-              message: res.message,
-              type: "error"
-            });
-          }
-          this.$notify({
-            title: "提示",
-            message: res.message,
-            type: "success"
-          });
-          row.status = res.data;
-        })
-        .catch(err => {
-          this.$message({
-            message: "网络错误，请稍后再试",
-            type: "warning"
-          });
-          console.log(err);
-        });
     },
     handleFilter() {
-      this.listQuery.page = 1;
-      this.getList();
+      this.listQuery.page = 1
+      this.getList()
     },
     getList() {
-      this.listLoading = true;
-      this.$get("/api/users/getAll", {
+      this.listLoading = true
+      this.$get('/api/users/getAll', {
         pageNow: this.listQuery.page,
         pageSize: this.listQuery.limit,
         ...this.listQuery
       })
-        .then(res => {
-          this.listLoading = false;
+        .then((res) => {
+          this.listLoading = false
           if (res.code != 200) {
             return this.$notify({
-              title: "失败",
+              title: '失败',
               message: res.message,
-              type: "error"
-            });
+              type: 'error'
+            })
           }
-          this.list = res.data.list;
-          this.total = res.data.total;
+          this.list = res.data.list
+          this.total = res.data.total
         })
-        .catch(err => {
-          this.listLoading = false;
+        .catch((err) => {
+          this.listLoading = false
           this.$message({
-            message: "网络错误，请稍后再试",
-            type: "warning"
-          });
-          console.log(err);
-        });
+            message: '网络错误，请稍后再试',
+            type: 'warning'
+          })
+          console.log(err)
+        })
     },
     handleDownload() {
-      this.downloadLoading = true;
-      import("@/vendor/Export2Excel").then(excel => {
+      this.downloadLoading = true
+      import('@/vendor/Export2Excel').then((excel) => {
         const tHeader = [
-          "用户类型",
-          "禁启用状态",
-          "用户编号",
-          "用户姓名",
-          "用户性别",
-          "头像地址",
-          "用户账号",
-          "手机号",
-          "注册时间"
-        ];
+          '用户类型',
+          '禁启用状态',
+          '用户编号',
+          '用户姓名',
+          '用户性别',
+          '头像地址',
+          '用户账号',
+          '手机号',
+          '注册时间'
+        ]
         const filterVal = [
-          "type",
-          "status",
-          "userNo",
-          "name",
-          "gender",
-          "logo",
-          "account",
-          "phone",
-          "createTime"
-        ];
-        const data = this.formatJson(filterVal);
+          'type',
+          'status',
+          'userNo',
+          'name',
+          'gender',
+          'logo',
+          'account',
+          'phone',
+          'createTime'
+        ]
+        const data = this.formatJson(filterVal)
         excel.export_json_to_excel({
           header: tHeader,
           data,
-          filename: "用户信息表"
-        });
-        this.downloadLoading = false;
-      });
+          filename: '用户信息表'
+        })
+        this.downloadLoading = false
+      })
     },
     formatJson(filterVal) {
-      return this.list.map(v =>
-        filterVal.map(j => {
-          if (j === "createTime") {
-            return parseTime(v[j]);
-          } else if (j === "type") {
-            return v[j] == 0 ? "超级管理员" : v[j] == 1 ? "工作人员" : "教师";
-          } else if (j === "status") {
-            return v[j] == 0 ? "禁用" : "启用";
-          } else if (j === "gender") {
-            return v[j] == 0 ? "男" : "女";
+      return this.list.map((v) =>
+        filterVal.map((j) => {
+          if (j === 'createTime') {
+            return parseTime(v[j])
+          } else if (j === 'type') {
+            return v[j] == 0 ? '管理员' : '普通用户'
+          } else if (j === 'status') {
+            return v[j] == 0 ? '禁用' : '启用'
+          } else if (j === 'gender') {
+            return v[j] == 0 ? '男' : '女'
           } else {
-            return v[j];
+            return v[j]
           }
         })
-      );
-    },
-    handleAvatarSuccess(res, file) {
-      this.$nextTick(() => {
-        this.isAddModal
-          ? (this.addFormData.logo = res.data)
-          : (this.editFormData.logo = res.data);
-      });
-    },
-    beforeAvatarUpload(file) {
-      const isLt2M = file.size / 1024 / 1024 < 1;
-
-      if (!isLt2M) {
-        this.$message.error("上传头像图片大小不能超过 1MB!");
-      }
-      return isLt2M;
+      )
     }
-  },
-  mounted() {}
-};
+  }
+}
 </script>
 
 <style lang="scss">
-.avatar-uploader .el-upload {
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-.avatar-uploader .el-upload:hover {
-  border-color: #409eff;
-}
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-  width: 100px;
-  height: 100px;
-  line-height: 100px;
-  text-align: center;
-}
-.avatar {
-  width: 100px;
-  height: 100px;
-  display: block;
+.hot,
+.recommend {
+  h3 {
+    margin-top: 0;
+  }
+  .hot-col {
+    padding: 5px;
+    cursor: pointer;
+    position: relative;
+  }
+  .time {
+    font-size: 13px;
+    color: #999;
+  }
+
+  .bottom {
+    margin-top: 13px;
+    line-height: 12px;
+  }
+
+  .button {
+    padding: 0;
+    float: right;
+  }
+
+  .image {
+    width: 100%;
+    display: block;
+    transition: 0.3s;
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+
+  .clearfix:before,
+  .clearfix:after {
+    display: table;
+    content: "";
+  }
+
+  .clearfix:after {
+    clear: both;
+  }
+  .btns {
+    transition: 0.3s;
+    width: 100%;
+    text-align: center;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    opacity: 0;
+    padding: 5px;
+    .btns-wrapper {
+      padding: 10px 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.8) 40%,
+        rgba(255, 255, 255, 1) 100%
+      );
+    }
+  }
+  .card-info-wrapper:hover {
+    .btns {
+      opacity: 1;
+    }
+  }
 }
 </style>

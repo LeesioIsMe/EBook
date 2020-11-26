@@ -45,7 +45,7 @@ export const constantRoutes = [
         meta: { title: '个人中心', icon: 'user', affix: true }
       }
     ]
-  },
+  }
 ]
 
 /**
@@ -56,13 +56,8 @@ export const asyncRoutes = [
   {
     path: '/resources',
     component: Layout,
-    name: 'Resources',
-    redirect: "/resources/index",
-    meta: {
-      title: 'Resources',
-      icon: 'lock',
-      roles: ['admin'] // you can set roles in root nav
-    },
+    name: 'ResourceAudit',
+    redirect: '/resources/index',
     children: [
       {
         path: 'index',
@@ -70,6 +65,7 @@ export const asyncRoutes = [
         name: 'ResourceAudit',
         meta: {
           title: '资源审核',
+          icon: 'lock',
           roles: ['admin'] // or you can only set roles in sub nav
         }
       }
@@ -79,12 +75,7 @@ export const asyncRoutes = [
     path: '/ebook',
     component: Layout,
     name: 'EBook',
-    redirect: "/ebook/index",
-    meta: {
-      title: 'EBook',
-      icon: 'documentation',
-      roles: ['admin'] // you can set roles in root nav
-    },
+    redirect: '/ebook/index',
     children: [
       {
         path: 'index',
@@ -92,6 +83,7 @@ export const asyncRoutes = [
         name: 'EbookManagement',
         meta: {
           title: '图书管理',
+          icon: 'documentation',
           roles: ['admin'] // or you can only set roles in sub nav
         }
       }
@@ -101,12 +93,7 @@ export const asyncRoutes = [
     path: '/user',
     component: Layout,
     name: 'User',
-    redirect: "/user/index",
-    meta: {
-      title: 'User',
-      icon: 'peoples',
-      roles: ['admin'] // you can set roles in root nav
-    },
+    redirect: '/user/index',
     children: [
       {
         path: 'index',
@@ -114,6 +101,7 @@ export const asyncRoutes = [
         name: 'UserManagement',
         meta: {
           title: '用户管理',
+          icon: 'peoples',
           roles: ['admin'] // or you can only set roles in sub nav
         }
       }
@@ -123,19 +111,15 @@ export const asyncRoutes = [
     path: '/catrgory',
     component: Layout,
     name: 'Catrgory',
-    redirect: "/catrgory/index",
-    meta: {
-      title: 'Category',
-      icon: 'component',
-      roles: ['admin', 'user'] // you can set roles in root nav
-    },
+    redirect: '/catrgory/index',
     children: [
       {
         path: 'index',
         component: () => import('@/views/category/index'),
         name: 'CatrgoryManagement',
         meta: {
-          title: '图书分类',
+          title: '图书检索',
+          icon: 'component',
           roles: ['admin', 'user'] // or you can only set roles in sub nav
         }
       }
@@ -145,12 +129,7 @@ export const asyncRoutes = [
     path: '/rend',
     component: Layout,
     name: 'Rend',
-    redirect: "/rend/index",
-    meta: {
-      title: 'Rend',
-      icon: 'list',
-      roles: ['admin', 'user'] // you can set roles in root nav
-    },
+    redirect: '/rend/index',
     children: [
       {
         path: 'index',
@@ -158,6 +137,7 @@ export const asyncRoutes = [
         name: 'RendManagement',
         meta: {
           title: '借阅记录',
+          icon: 'list',
           roles: ['admin', 'user'] // or you can only set roles in sub nav
         }
       }
@@ -167,12 +147,7 @@ export const asyncRoutes = [
     path: '/download',
     component: Layout,
     name: 'Download',
-    redirect: "/download/index",
-    meta: {
-      title: 'Download',
-      icon: 'star',
-      roles: ['admin', 'user'] // you can set roles in root nav
-    },
+    redirect: '/download/index',
     children: [
       {
         path: 'index',
@@ -180,6 +155,7 @@ export const asyncRoutes = [
         name: 'DownloadManagement',
         meta: {
           title: '下载记录',
+          icon: 'star',
           roles: ['admin', 'user'] // or you can only set roles in sub nav
         }
       }
@@ -189,12 +165,7 @@ export const asyncRoutes = [
     path: '/upload',
     component: Layout,
     name: 'Upload',
-    redirect: "/upload/index",
-    meta: {
-      title: 'Upload',
-      icon: 'people',
-      roles: ['admin', 'user'] // you can set roles in root nav
-    },
+    redirect: '/upload/index',
     children: [
       {
         path: 'index',
@@ -202,6 +173,7 @@ export const asyncRoutes = [
         name: 'UploadManagement',
         meta: {
           title: '我上传的',
+          icon: 'people',
           roles: ['admin', 'user'] // or you can only set roles in sub nav
         }
       }
@@ -211,12 +183,7 @@ export const asyncRoutes = [
     path: '/statistic',
     component: Layout,
     name: 'Statistic',
-    redirect: "/statistic/index",
-    meta: {
-      title: 'Statistic',
-      icon: 'dashboard',
-      roles: ['admin'] // you can set roles in root nav
-    },
+    redirect: '/statistic/index',
     children: [
       {
         path: 'index',
@@ -224,6 +191,7 @@ export const asyncRoutes = [
         name: 'StatisticAnalyze',
         meta: {
           title: '数据分析',
+          icon: 'dashboard',
           roles: ['admin'] // or you can only set roles in sub nav
         }
       }

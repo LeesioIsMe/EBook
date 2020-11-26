@@ -6,8 +6,8 @@
 
 <script>
 export default {
-  name: "App",
-};
+  name: 'App'
+}
 </script>
 
 <style lang="scss">
@@ -15,7 +15,7 @@ export default {
   border-bottom: 1px solid #ccc;
 }
 .el-dialog__body {
-  max-height: 70vh;
+  max-height: 65vh;
   overflow: auto;
 }
 </style>
