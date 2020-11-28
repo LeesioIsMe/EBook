@@ -2,19 +2,29 @@
   <div class="wrapper">
     <div class="book-detail">
       <div class="logo">
-        <img :src="bookData.poster" alt="预览图">
+        <img :src="bookData.bookUrl" alt="预览图">
       </div>
       <div class="info">
         <p><label>书名</label>{{ bookData.bookName }}</p>
         <p><label>作者 </label>{{ bookData.author }}</p>
-        <p><label>出版社</label>{{ bookData.publishOrgName }}</p>
-        <p><label>出版年份</label>{{ bookData.year }}</p>
-        <p><label>图书检索</label>{{ bookData.category }}</p>
+        <p><label>出版社</label>{{ bookData.press }}</p>
+        <p><label>图书分类</label>{{ bookData.categoryName }}</p>
+        <p><label>上传作者</label>{{ bookData.createUserName }}</p>
+        <p>
+          <label>审核状态</label>{{
+            bookData.status == 1
+              ? "待审核"
+              : bookData.status == 2
+                ? "通过"
+                : "驳回"
+          }}
+        </p>
+        <p><label>上传时间</label>{{ bookData.createTime }}</p>
+        <p><label>修改时间</label>{{ bookData.modifiedTime }}</p>
       </div>
       <div class="remark">
         <p>
-          {{ bookData.remark }} wadjawdjaw adowihdio wah doiahwodi
-          ahwiodahwiodahdio awhdoiawh oidhawio awh iowahio
+          {{ bookData.remark }}
         </p>
       </div>
     </div>
@@ -47,35 +57,21 @@ export default {
       historyList: []
     }
   },
+  watch: {
+    'bookData.id'(newV) {
+      newV ? this.getHistory() : (this.historyList = [])
+    }
+  },
   created() {
-    if (this.isShowHistory) this.getHistory()
   },
   mounted() {},
   methods: {
     getHistory() {
-      console.log('11')
-      this.historyList = [
-        {
-          content: '包含敏感信息或广告, 予以删除',
-          createTime: '2020-11-21 20:46',
-          type: 'danger'
-        },
-        {
-          content: '资料缺失',
-          createTime: '2018-04-03 20:46',
-          type: 'danger'
-        },
-        {
-          content: '标题违规',
-          createTime: '2018-04-03 20:46',
-          type: 'danger'
-        },
-        {
-          content: '信息不充分',
-          createTime: '2018-04-03 20:46',
-          type: 'danger'
+      this.$get('/api/book/getBookFindingsAll/' + this.bookData.id).then(
+        (res) => {
+          this.historyList = res.data
         }
-      ]
+      )
     }
   }
 }
@@ -110,6 +106,11 @@ export default {
   }
   .info {
     width: calc(100% - 270px);
+    label {
+      display: inline-block;
+      width: 80px;
+      text-align: left;
+    }
   }
   .remark {
     transition: 0.6s;

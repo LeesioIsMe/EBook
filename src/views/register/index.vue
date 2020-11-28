@@ -1,15 +1,15 @@
 <template>
-  <div class="login-container">
+  <div class="regist-container">
     <el-form
-      ref="loginForm"
-      :model="loginForm"
-      :rules="loginRules"
-      class="login-form"
+      ref="registForm"
+      :model="registForm"
+      :rules="registRules"
+      class="regist-form"
       autocomplete="on"
       label-position="left"
     >
       <div class="title-container">
-        <h3 class="title">用户 登陆</h3>
+        <h3 class="title">用户 注册</h3>
       </div>
 
       <el-form-item prop="username">
@@ -18,7 +18,7 @@
         </span>
         <el-input
           ref="username"
-          v-model="loginForm.username"
+          v-model="registForm.username"
           placeholder="username"
           name="username"
           type="text"
@@ -40,7 +40,7 @@
           <el-input
             :key="passwordType"
             ref="password"
-            v-model="loginForm.password"
+            v-model="registForm.password"
             :type="passwordType"
             placeholder="Password"
             name="password"
@@ -48,7 +48,7 @@
             autocomplete="on"
             @keyup.native="checkCapslock"
             @blur="capsTooltip = false"
-            @keyup.enter.native="handleLogin"
+            @keyup.enter.native="handleRegiste"
           />
           <span class="show-pwd" @click="showPwd">
             <svg-icon
@@ -58,18 +58,52 @@
         </el-form-item>
       </el-tooltip>
 
+      <el-tooltip
+        v-model="capsTooltip"
+        content="Caps lock is On"
+        placement="right"
+        manual
+      >
+        <el-form-item prop="confirmPassword">
+          <span class="svg-container">
+            <svg-icon icon-class="password" />
+          </span>
+          <el-input
+            :key="confirmPasswordType"
+            ref="confirmPassword"
+            v-model="registForm.confirmPassword"
+            :type="confirmPasswordType"
+            placeholder="comfirm password"
+            name="confirmPassword"
+            tabindex="2"
+            autocomplete="on"
+            @keyup.native="checkCapslock"
+            @blur="capsTooltip = false"
+            @keyup.enter.native="handleRegiste"
+          />
+          <span class="show-pwd" @click="showConfirmPwd">
+            <svg-icon
+              :icon-class="
+                confirmPasswordType === 'password' ? 'eye' : 'eye-open'
+              "
+            />
+          </span>
+        </el-form-item>
+      </el-tooltip>
+
       <el-button
         :loading="loading"
         type="primary"
         style="width: 100%; margin-bottom: 30px"
-        @click.native.prevent="handleLogin"
-      >登陆</el-button>
+        @click.native.prevent="handleRegiste"
+      >注册</el-button>
     </el-form>
     <el-button
+      :loading="loading"
       type="text"
       style="position: fixed; right: 40px; top: 20px"
-      @click="goRegister"
-    >注册</el-button>
+      @click="$router.push('/login')"
+    >登陆</el-button>
   </div>
 </template>
 
@@ -78,7 +112,7 @@ import { validUsername } from '@/utils/validate'
 import MD5 from 'md5'
 
 export default {
-  name: 'Login',
+  name: 'Registe',
   data() {
     const validateUsername = (rule, value, callback) => {
       if (!validUsername(value)) {
@@ -101,52 +135,59 @@ export default {
         callback()
       }
     }
+    const validateConfirmPassword = (rule, value, callback) => {
+      if (this.registForm.password != value) {
+        callback(new Error('两次密码输入不相同, 重新输入'))
+      } else {
+        callback()
+      }
+    }
     return {
-      loginForm: {
+      registForm: {
         username: '',
-        password: ''
+        password: '',
+        confirmPassword: ''
       },
-      loginRules: {
-        username: [{ required: true, trigger: 'blur' }],
-        password: [{ required: true, trigger: 'blur' }]
+      registRules: {
+        username: [
+          { required: true, trigger: 'blur', validator: validateUsername }
+        ],
+        password: [
+          { required: true, trigger: 'blur', validator: validatePassword }
+        ],
+        confirmPassword: [
+          {
+            required: true,
+            trigger: 'blur',
+            validator: validateConfirmPassword
+          }
+        ]
       },
       passwordType: 'password',
+      confirmPasswordType: 'password',
       capsTooltip: false,
       loading: false,
       redirect: undefined,
       otherQuery: {}
     }
   },
-  watch: {
-    $route: {
-      handler: function(route) {
-        const query = route.query
-        // console.log(route);
-        if (query) {
-          this.redirect = query.redirect
-          this.otherQuery = this.getOtherQuery(query)
-        }
-      },
-      immediate: true
-    }
-  },
+  watch: {},
   created() {
     // window.addEventListener('storage', this.afterQRScan)
   },
   mounted() {
-    if (this.loginForm.username === '') {
+    if (this.registForm.username === '') {
       this.$refs.username.focus()
-    } else if (this.loginForm.password === '') {
+    } else if (this.registForm.password === '') {
       this.$refs.password.focus()
+    } else if (this.registForm.confirmPassword === '') {
+      this.$refs.confirmPassword.focus()
     }
   },
   destroyed() {
     // window.removeEventListener('storage', this.afterQRScan)
   },
   methods: {
-    goRegister() {
-      this.$router.push('/register')
-    },
     checkCapslock(e) {
       const { key } = e
       this.capsTooltip = key && key.length === 1 && key >= 'A' && key <= 'Z'
@@ -161,13 +202,23 @@ export default {
         this.$refs.password.focus()
       })
     },
-    handleLogin() {
-      this.$refs.loginForm.validate((valid) => {
+    showConfirmPwd() {
+      if (this.confirmPasswordType === 'password') {
+        this.confirmPasswordType = ''
+      } else {
+        this.confirmPasswordType = 'password'
+      }
+      this.$nextTick(() => {
+        this.$refs.confirmPassword.focus()
+      })
+    },
+    handleRegiste() {
+      this.$refs.registForm.validate((valid) => {
         if (valid) {
           this.loading = true
-          this.$post('/api/user/login', {
-            username: this.loginForm.username,
-            password: this.loginForm.password
+          this.$post('/api/user/add', {
+            username: this.registForm.username,
+            password: this.registForm.password
           })
             .then((res) => {
               if (res.code != 200) {
@@ -177,23 +228,8 @@ export default {
                   type: 'error'
                 })
               }
-              this.$store
-                .dispatch('user/login', res.data)
-                .then(() => {
-                  this.loading = false
-                  localStorage.setItem(
-                    'userInfo',
-                    JSON.stringify(res.data.user)
-                  )
-                  this.$router.push({
-                    path: this.redirect || '/',
-                    query: this.otherQuery
-                  })
-                })
-                .catch((err) => {
-                  console.log(err)
-                  this.loading = false
-                })
+              this.$message.success('注册成功, 即将跳转登陆...')
+              setTimeout(() => { this.$router.push('/login') }, 2000)
             })
             .catch((err) => {
               console.log('网络错误')
@@ -226,13 +262,13 @@ $light_gray: #fff;
 $cursor: #fff;
 
 @supports (-webkit-mask: none) and (not (cater-color: $cursor)) {
-  .login-container .el-input input {
+  .regist-container .el-input input {
     color: $cursor;
   }
 }
 
 /* reset element-ui css */
-.login-container {
+.regist-container {
   .el-input {
     display: inline-block;
     height: 47px;
@@ -269,13 +305,13 @@ $bg: #2d3a4b;
 $dark_gray: #889aa4;
 $light_gray: #eee;
 
-.login-container {
+.regist-container {
   min-height: 100%;
   width: 100%;
   background-color: $bg;
   overflow: hidden;
 
-  .login-form {
+  .regist-form {
     position: relative;
     width: 520px;
     max-width: 100%;

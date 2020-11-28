@@ -2,11 +2,11 @@
   <div class="container">
     <div class="detail">
       <div class="left">
-        <div class="logo">
-          <img :src="userDetail.logo" alt="用户头像">
+        <div class="avatar">
+          <img :src="userDetail.avatar" alt="用户头像">
           <el-upload
-            action="/api/uploadFile"
-            :data="{ type: 'logo' }"
+            action="/api/upload/image"
+            :data="{ type: 'avatar' }"
             :show-file-list="false"
             :on-success="handleAvatarSuccess"
             :before-upload="beforeAvatarUpload"
@@ -26,43 +26,56 @@
             @submit.prevent.native="() => false"
           >
             <el-form-item label="昵称">
-              <template v-if="!editNickName">
-                <span>{{ userDetail.nickName }}</span>
+              <template v-if="!editInfo">
+                <span>{{ userDetail.nickname }}</span>
                 <el-button
                   size="mini"
                   type="text"
                   icon="el-icon-edit"
-                  @click="editNickName = true"
+                  @click="editInfo = true"
                 />
               </template>
-              <el-input
-                v-else
-                v-model="userDetail.nickName"
-                size="small"
-                @blur="changeNickName"
-              />
+              <el-input v-else v-model="userDetail.nickname" size="small" />
             </el-form-item>
             <el-form-item label="出生年月">
-              {{ userDetail.birthday | parseTime }}
+              <template v-if="!editInfo">
+                {{ userDetail.birth }}
+              </template>
+              <el-input v-else v-model="userDetail.birth" size="small" />
+            </el-form-item>
+            <el-form-item label="邮箱">
+              <template v-if="!editInfo">
+                {{ userDetail.email }}
+              </template>
+              <el-input v-else v-model="userDetail.email" size="small" />
             </el-form-item>
             <el-form-item label="性别">
-              {{ userDetail.sex }}
-            </el-form-item>
-            <el-form-item label="性别">
-              {{ userDetail.age }}
+              <template v-if="!editInfo">
+                {{ userDetail.sex | genderFilter }}
+              </template>
+              <el-input v-else v-model="userDetail.sex" size="small" />
             </el-form-item>
             <el-form-item label="联系方式">
-              {{ userDetail.phone }}
+              <template v-if="!editInfo">
+                {{ userDetail.phoneNumber }}
+              </template>
+              <el-input v-else v-model="userDetail.phoneNumber" size="small" />
             </el-form-item>
             <el-form-item label="资源上传量">
-              {{ userDetail.resourceUploadNum }}
+              {{ userDetail.upNumber }}
             </el-form-item>
             <el-form-item label="资源下载量">
-              {{ userDetail.resourceDownloadNum }}
+              {{ userDetail.downNumber }}
             </el-form-item>
             <el-form-item label="注册时间">
-              {{ userDetail.registerTime | parseTime }}
+              {{ userDetail.createTime | parseTime }}
             </el-form-item>
+            <el-button v-if="editInfo" size="small" type="primary" @click="saveBasicInfo">保存</el-button>
+            <el-button
+              v-if="editInfo"
+              size="small"
+              @click="getUserInfo"
+            >取消</el-button>
           </el-form>
         </div>
       </div>
@@ -70,7 +83,11 @@
         <el-card class="box-card">
           <div slot="header" class="clearfix">
             <span>资源下载排行</span>
-            <el-button style="float: right; padding: 3px 0" type="text" @click="$router.push('/ebook')">
+            <el-button
+              style="float: right; padding: 3px 0"
+              type="text"
+              @click="$router.push('/ebook')"
+            >
               查看更多
             </el-button>
           </div>
@@ -148,7 +165,7 @@ export default {
     }
     return {
       userDetail: {},
-      editNickName: false,
+      editInfo: false,
       id: 'myChart',
       className: 'my-chart',
       chart: null
@@ -160,7 +177,7 @@ export default {
     }
   },
   created() {
-    this.getList()
+    this.getUserInfo()
     this.getDownList()
     this.getPayByDate(1)
   },
@@ -174,11 +191,8 @@ export default {
     this.chart = null
   },
   methods: {
-    onSubmit() {
-      return false
-    },
-    changeNickName() {
-      this.editNickName = false
+    saveBasicInfo() {
+      this.editInfo = false
       this.$message.success('修改成功')
     },
     getDownList() {
@@ -210,20 +224,15 @@ export default {
         }
       ]
     },
-    getList() {
-      this.userDetail = {
-        nickName: '豪仔李大壮',
-        birthday: new Date(),
-        sex: 1,
-        age: 23,
-        resourceUploadNum: 100,
-        resourceDownloadNum: 2000,
-        phone: 13462222222,
-        registerTime: new Date(),
-        logo:
-          'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
-        userType: 0 // 0 管理员  1 普通用户
-      }
+    getUserInfo() {
+      this.editInfo = false
+      this.$get('/api/user/info').then((res) => {
+        if (res.code != 200) {
+          this.$message.error(res.msg)
+          return
+        }
+        this.userDetail = res.data
+      })
     },
     formatJson(filterVal) {
       return this.list.map((v) =>
@@ -241,7 +250,7 @@ export default {
       )
     },
     handleAvatarSuccess(res, file) {
-      this.userDetail.logo = res.data
+      this.userDetail.avatar = res.data
     },
     beforeAvatarUpload(file) {
       const isLt2M = file.size / 1024 / 1024 < 1
@@ -471,7 +480,7 @@ export default {
     display: flex;
     justify-content: flex-start;
     flex-wrap: wrap;
-    .logo {
+    .avatar {
       width: 280px;
       padding-right: 30px;
       position: relative;

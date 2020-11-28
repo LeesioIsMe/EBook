@@ -77,7 +77,7 @@
     >
       <el-table-column align="center" label="序号" width="80px">
         <template slot-scope="{ $index }">
-          <span>{{ (listQuery.page - 1) * listQuery.limit + $index + 1 }}</span>
+          <span>{{ (listQuery.pageNum - 1) * listQuery.pageSize + $index + 1 }}</span>
         </template>
       </el-table-column>
       <el-table-column label="用户类型" width="150px">
@@ -188,8 +188,8 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="listQuery.page"
-      :limit.sync="listQuery.limit"
+      :page.sync="listQuery.pageNum"
+      :limit.sync="listQuery.pageSize"
       @pagination="getList"
     />
     <el-dialog title="资源详情" :visible.sync="detailModal" width="600px">
@@ -280,11 +280,9 @@ export default {
       total: 0,
       listLoading: false,
       listQuery: {
-        page: 1,
-        limit: 20,
-        importance: undefined,
-        title: undefined,
-        type: undefined
+        pageNum: 1,
+        pageSize: 20,
+        keyword: '', categoryId: ''
       },
       downloadLoading: false,
       typeList: [
@@ -395,14 +393,14 @@ export default {
         })
     },
     handleFilter() {
-      this.listQuery.page = 1
+      this.listQuery.pageNum = 1
       this.getList()
     },
     getList() {
       this.listLoading = true
       this.$get('/api/users/getAll', {
-        pageNow: this.listQuery.page,
-        pageSize: this.listQuery.limit,
+        pageNow: this.listQuery.pageNum,
+        pageSize: this.listQuery.pageSize,
         ...this.listQuery
       })
         .then((res) => {

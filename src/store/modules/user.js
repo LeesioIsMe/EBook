@@ -1,20 +1,11 @@
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
-const tokens = {
-  admin: {
-    token: 'admin-token'
-  },
-  user: {
-    token: 'user-token'
-  }
-}
-
 const state = {
   token: getToken(),
   name: '',
   avatar: '',
-  userNo: '',
+  id: '',
   roles: []
 }
 
@@ -28,8 +19,8 @@ const mutations = {
   SET_AVATAR: (state, avatar) => {
     state.avatar = avatar
   },
-  SET_USERNO: (state, userNo) => {
-    state.userNo = userNo
+  SET_USERNO: (state, id) => {
+    state.id = id
   },
   SET_ROLES: (state, roles) => {
     state.roles = roles
@@ -39,14 +30,14 @@ const mutations = {
 const actions = {
   // user login
   login({ commit }, userInfo) {
-    const { type, name, userNo, logo } = userInfo
+    const { type, nickname, id, logo } = userInfo.user
     return new Promise((resolve, reject) => {
       try {
-        const data = tokens[type == 0 ? "admin" : "user"];
+        const data = userInfo
         // roles must be a non-empty array
         commit('SET_TOKEN', data.token)
         setToken(data.token)
-        resolve();
+        resolve()
       } catch (error) {
         reject(error)
       }
@@ -57,23 +48,23 @@ const actions = {
   getInfo({ commit, state }) {
     return new Promise((resolve, reject) => {
       try {
-        var data = state.token ? localStorage.getItem("userInfo") && JSON.parse(localStorage.getItem("userInfo")) : null;
+        var data = state.token ? localStorage.getItem('userInfo') && JSON.parse(localStorage.getItem('userInfo')) : null
         if (!data) {
           reject('Verification failed, please Login again.')
         }
 
-        data.roles = [data.type == 0 ? "admin" : "user"]
+        data.roles = [data.type == 0 ? 'admin' : 'user']
 
-        const { roles, name, logo, userNo } = data
+        const { roles, nickname, logo, id } = data
 
         // roles must be a non-empty array
         if (!roles || roles.length <= 0) {
           reject('getInfo: roles must be a non-null array!')
         }
         commit('SET_ROLES', roles)
-        commit('SET_NAME', name)
+        commit('SET_NAME', nickname)
         commit('SET_AVATAR', logo)
-        commit('SET_USERNO', userNo)
+        commit('SET_USERNO', id)
         resolve(data)
       } catch (error) {
         console.log(error)
@@ -88,7 +79,7 @@ const actions = {
       try {
         commit('SET_TOKEN', '')
         commit('SET_ROLES', [])
-        localStorage.removeItem("userInfo");
+        localStorage.removeItem('userInfo')
         removeToken()
         resetRouter()
         // reset visited views and cached views
@@ -98,7 +89,6 @@ const actions = {
       } catch (error) {
         reject(error)
       }
-
     })
   },
 
@@ -110,7 +100,7 @@ const actions = {
       removeToken()
       resolve()
     })
-  },
+  }
 }
 
 export default {

@@ -2,17 +2,22 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input
-        v-model="listQuery.keywords"
-        placeholder="书名/作者/出版社"
+        v-model="listQuery.keyword"
+        placeholder="资源名"
         style="width: 200px"
         class="filter-item"
         clearable
         @keyup.enter.native="handleFilter"
       />
       <el-cascader
-        v-model="listQuery.category"
+        v-model="listQuery.categoryId"
         :options="categoryList"
-        :props="{ checkStrictly: true }"
+        :props="{
+          label: 'name',
+          value: 'id',
+          children: 'children',
+          checkStrictly: true,
+        }"
         placeholder="图书检索"
         class="filter-item"
         clearable
@@ -38,7 +43,9 @@
     >
       <el-table-column align="center" label="序号" width="80px">
         <template slot-scope="{ $index }">
-          <span>{{ (listQuery.page - 1) * listQuery.limit + $index + 1 }}</span>
+          <span>{{
+            (listQuery.pageNum - 1) * listQuery.pageSize + $index + 1
+          }}</span>
         </template>
       </el-table-column>
       <el-table-column label="图书名称" width="200px">
@@ -50,11 +57,11 @@
         <template slot-scope="{ row }">
           <span>
             <el-image
-              v-if="row.poster"
+              v-if="row.bookUrl"
               style="width: 50px; height: 50px"
-              :src="row.poster"
+              :src="row.bookUrl"
               lazy
-              :preview-src-list="[row.poster]"
+              :preview-src-list="[row.bookUrl]"
             />
             <span v-else>-</span>
           </span>
@@ -72,12 +79,7 @@
       </el-table-column>
       <el-table-column label="出版社" align="center" width="200px">
         <template slot-scope="{ row }">
-          <span>{{ row.publishOrgName }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="年份" width="150px" align="center">
-        <template slot-scope="{ row }">
-          <span>{{ row.year | parseTime }}</span>
+          <span>{{ row.press }}</span>
         </template>
       </el-table-column>
       <el-table-column label="备注" width="200px" align="center">
@@ -92,13 +94,20 @@
         align="center"
       >
         <template slot-scope="{ row }">
-          <span>{{ row.uploaderName }}</span>
+          <span>{{ row.createUserName }}</span>
         </template>
       </el-table-column>
       <el-table-column label="上传时间" width="150px" align="center">
         <template slot-scope="{ row }">
           <span>{{
             row.createTime | parseTime("{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="修改时间" width="150px" align="center">
+        <template slot-scope="{ row }">
+          <span>{{
+            row.modifiedTime | parseTime("{y}-{m}-{d} {h}:{i}:{s}")
           }}</span>
         </template>
       </el-table-column>
@@ -110,15 +119,12 @@
         class-name="small-padding fixed-width"
       >
         <template slot-scope="{ row }">
-          <el-button
-            size="mini"
-            @click="historyThis(row)"
-          >历史</el-button>
+          <el-button size="mini" @click="historyThis(row)">历史</el-button>
           <el-button
             size="mini"
             type="primary"
             @click="detailThis(row)"
-          >查阅</el-button>
+          >查看</el-button>
           <el-button
             size="mini"
             type="success"
@@ -135,8 +141,8 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="listQuery.page"
-      :limit.sync="listQuery.limit"
+      :page.sync="listQuery.pageNum"
+      :limit.sync="listQuery.pageSize"
       @pagination="getList"
     />
     <el-dialog title="历史记录" :visible.sync="historyModal" width="600px">
@@ -186,52 +192,16 @@ export default {
   filters: {},
   data() {
     return {
-      categoryList: [
-        {
-          id: '1',
-          label: '一级分类',
-          value: '1',
-          children: [
-            {
-              id: '1-1',
-              label: '二级分类1',
-              value: '1-1',
-              children: [
-                {
-                  id: '1-1-1',
-                  label: '三级分类1',
-                  value: '1-1-1'
-                },
-                {
-                  id: '1-1-2',
-                  label: '三级分类2',
-                  value: '1-1-2'
-                }
-              ]
-            },
-            {
-              id: '1-2',
-              label: '二级分类2',
-              value: '1-2'
-            }
-          ]
-        },
-        {
-          id: '2',
-          label: '一级分类2',
-          value: '2'
-        }
-      ],
+      categoryList: [],
       tableKey: 0,
       list: [],
       total: 0,
       listLoading: false,
       listQuery: {
-        page: 1,
-        limit: 20,
-        importance: undefined,
-        title: undefined,
-        type: undefined
+        pageNum: 1,
+        pageSize: 20,
+        keyword: '',
+        categoryId: ''
       },
       // 弹窗中的数据
       rules: {},
@@ -245,7 +215,7 @@ export default {
   },
   watch: {
     historyModal(newV) {
-      if (!newV) this.modalData = {}
+      if (!newV) (this.modalData = {}), (this.historyList = [])
     },
     detailModal(newV) {
       if (!newV) this.modalData = {}
@@ -255,45 +225,27 @@ export default {
     }
   },
   created() {
+    this.getCategoryList()
     this.getList()
   },
   mounted() {},
   methods: {
+    getCategoryList() {
+      this.$get('/api/book/getCategory').then((res) => {
+        this.categoryList = res.data
+      })
+    },
     historyThis(row) {
       this.historyModal = true
-      this.historyList = [
-        {
-          content: '包含敏感信息或广告, 予以删除',
-          createTime: '2020-11-21 20:46',
-          type: 'danger'
-        },
-        {
-          content: '资料缺失',
-          createTime: '2018-04-03 20:46',
-          type: 'danger'
-        },
-        {
-          content: '标题违规',
-          createTime: '2018-04-03 20:46',
-          type: 'danger'
-        },
-        {
-          content: '信息不充分',
-          createTime: '2018-04-03 20:46',
-          type: 'danger'
-        }
-      ]
+      this.$get('/api/book/getBookFindingsAll/' + row.id).then((res) => {
+        this.historyList = res.data
+      })
     },
     detailThis(row) {
       this.detailModal = true
-      this.modalData = {
-        poster:
-          'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
-        bookName: '钢铁是怎样炼成的',
-        createTime: new Date(),
-        author: '李大壮',
-        publishOrgName: '中国人民出版社'
-      }
+      this.$get('/api/book/getInfo/' + row.id).then((res) => {
+        this.modalData = res.data
+      })
     },
     passThis(row) {
       this.$confirm('是否通过审核', '提示', {
@@ -302,12 +254,25 @@ export default {
         type: 'warning'
       })
         .then(() => {
-          this.$message.success('审核通过')
-          this.getList()
+          this.auditThisConnfirm(row)
         })
         .catch(() => {
           this.$message.info('操作取消')
         })
+    },
+    auditThisConnfirm(row, backStatus) {
+      this.$post('/api/book/examine', {
+        status: 2,
+        bookId: row.id,
+        createUser: this.$store.state.id,
+        findings: backStatus == 3 ? this.backInfo : '通过'
+      }).then((res) => {
+        if (res.code != 200) {
+          return this.$message.error(res.msg)
+        }
+        this.$message.success(backStatus ? '驳回成功' : '审核通过')
+        this.getList()
+      })
     },
     backThis(row) {
       this.backModal = true
@@ -317,22 +282,25 @@ export default {
       if (this.backInfo.trim().length == 0) {
         return this.$message.warning('驳回信息不能改为空')
       }
-      this.$message.success('资源驳回成功')
-      this.$store.state.color = '1'
+      this.auditThisConnfirm(this.modalData, true)
       this.backModal = false
       this.getList()
     },
 
     handleFilter() {
-      this.listQuery.page = 1
+      this.listQuery.pageNum = 1
       this.getList()
     },
     getList() {
+      console.log(this.listQuery)
+      var params = { ...this.listQuery }
+      params.categoryId = params.categoryId
+        ? params.categoryId[params.categoryId.length - 1]
+        : ''
       this.listLoading = true
-      this.$get('/api/users/getAll', {
-        pageNow: this.listQuery.page,
-        pageSize: this.listQuery.limit,
-        ...this.listQuery
+      this.$get('/api/book/findBookList', {
+        status: 1,
+        ...params
       })
         .then((res) => {
           this.listLoading = false
@@ -343,7 +311,7 @@ export default {
               type: 'error'
             })
           }
-          this.list = res.data.list
+          this.list = res.data.rows
           this.total = res.data.total
         })
         .catch((err) => {

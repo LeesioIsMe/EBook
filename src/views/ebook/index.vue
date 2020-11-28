@@ -2,8 +2,8 @@
   <div class="app-container">
     <div class="filter-container">
       <el-input
-        v-model="listQuery.keywords"
-        placeholder="书名/作者/出版社"
+        v-model="listQuery.keyword"
+        placeholder="资源名"
         style="width: 200px"
         class="filter-item"
         clearable
@@ -46,7 +46,7 @@
     >
       <el-table-column align="center" label="序号" width="80px">
         <template slot-scope="{ $index }">
-          <span>{{ (listQuery.page - 1) * listQuery.limit + $index + 1 }}</span>
+          <span>{{ (listQuery.pageNum - 1) * listQuery.pageSize + $index + 1 }}</span>
         </template>
       </el-table-column>
       <el-table-column label="图书名称" width="200px">
@@ -122,7 +122,7 @@
             size="mini"
             type="primary"
             @click="detailThis(row)"
-          >查阅</el-button>
+          >查看</el-button>
           <el-button
             size="mini"
             type="warning"
@@ -144,8 +144,8 @@
     <pagination
       v-show="total > 0"
       :total="total"
-      :page.sync="listQuery.page"
-      :limit.sync="listQuery.limit"
+      :page.sync="listQuery.pageNum"
+      :limit.sync="listQuery.pageSize"
       @pagination="getList"
     />
     <el-dialog title="资源详情" :visible.sync="detailModal" width="600px">
@@ -237,11 +237,9 @@ export default {
       total: 0,
       listLoading: false,
       listQuery: {
-        page: 1,
-        limit: 20,
-        importance: undefined,
-        title: undefined,
-        type: undefined
+        pageNum: 1,
+        pageSize: 20,
+        keyword: '', categoryId: ''
       },
       // 弹窗中的数据
       rules: {},
@@ -307,14 +305,14 @@ export default {
         })
     },
     handleFilter() {
-      this.listQuery.page = 1
+      this.listQuery.pageNum = 1
       this.getList()
     },
     getList() {
       this.listLoading = true
       this.$get('/api/users/getAll', {
-        pageNow: this.listQuery.page,
-        pageSize: this.listQuery.limit,
+        pageNow: this.listQuery.pageNum,
+        pageSize: this.listQuery.pageSize,
         ...this.listQuery
       })
         .then((res) => {

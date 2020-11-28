@@ -149,11 +149,9 @@ export default {
       total: 0,
       listLoading: false,
       listQuery: {
-        page: 1,
-        limit: 20,
-        importance: undefined,
-        title: undefined,
-        type: undefined
+        pageNum: 1,
+        pageSize: 20,
+        keyword: '', categoryId: ''
       },
       downloadLoading: false,
       activeNames: ['3'],
@@ -207,14 +205,14 @@ export default {
         })
     },
     handleFilter() {
-      this.listQuery.page = 1
+      this.listQuery.pageNum = 1
       this.getList()
     },
     getList() {
       this.listLoading = true
       this.$get('/api/users/getAll', {
-        pageNow: this.listQuery.page,
-        pageSize: this.listQuery.limit,
+        pageNow: this.listQuery.pageNum,
+        pageSize: this.listQuery.pageSize,
         ...this.listQuery
       })
         .then((res) => {
