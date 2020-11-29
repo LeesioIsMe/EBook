@@ -133,7 +133,8 @@ export default {
       listQuery: {
         pageNum: 1,
         pageSize: 20,
-        keyword: '', categoryId: ''
+        keyword: '',
+        categoryId: ''
       },
       // 弹窗中的数据
       rules: {},
@@ -163,7 +164,7 @@ export default {
     editThis(row) {
       this.addEditModal = true
       this.title = '资源编辑'
-      this.formData = Object.assign(row, {})
+      this.formData = Object.assign({}, row)
       this.type = 1
     },
     detailThis(row) {
@@ -215,7 +216,7 @@ export default {
           if (res.code != 200) {
             return this.$notify({
               title: '失败',
-              message: res.message,
+              message: res.msg,
               type: 'error'
             })
           }

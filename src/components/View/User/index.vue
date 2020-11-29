@@ -4,6 +4,7 @@
       :title="title"
       :visible.sync="modal"
       :close-on-click-modal="false"
+      :show-close="false"
     >
       <el-form ref="form" :model="formData" :rules="rules" label-width="120px">
         <el-form-item label="用户账号" prop="username">
@@ -169,7 +170,7 @@ export default {
   methods: {
     handleAvatarSuccess(res, file) {
       if (res.code != 200) {
-        this.$message.error(res.message)
+        this.$message.error(res.msg)
         this.formData.avatar = ''
         return
       }

@@ -4,26 +4,44 @@
       :title="title"
       :visible.sync="modal"
       :close-on-click-modal="false"
+      :show-close="false"
     >
       <el-form ref="form" :model="formData" :rules="rules" label-width="120px">
         <el-form-item label="图书名称">
-          <el-input v-model="formData.bookname" />
+          <el-input v-model="formData.bookName" />
+        </el-form-item>
+        <el-form-item label="图书名称">
+          <el-cascader
+            v-model="formData.categoryId"
+            :options="categoryList"
+            :props="{
+              label: 'name',
+              value: 'id',
+              children: 'children',
+              checkStrictly: true,
+            }"
+            placeholder="图书检索"
+            class="filter-item"
+            clearable
+            @keyup.enter.native="handleFilter"
+          />
         </el-form-item>
         <el-form-item label="预览图上传">
           <el-upload
             class="avatar-uploader"
-            action="/api/uploadFile"
-            :data="{
-              type: 'image',
+            action="/api/upload/image"
+            :headers="{
+              Authorization: $store.state.user.token,
             }"
             :show-file-list="false"
             :auto-upload="true"
+            :limit="5"
             :before-upload="beforeAvatarUpload"
             :on-success="handleAvatarSuccess"
           >
             <i slot="default" class="el-icon-plus avatar-uploader-icon" />
           </el-upload>
-          <div v-for="(v, i) in formData.logo" :key="i" class="poster-wrapper">
+          <div v-for="(v, i) in formData.cover" :key="i" class="poster-wrapper">
             <img
               class="el-upload-list__item-thumbnail"
               :src="v"
@@ -36,9 +54,9 @@
         <el-form-item label="上传资源">
           <el-upload
             class="upload-demo"
-            action="/api/uploadFile"
-            :data="{
-              type: 'image',
+            action="/api/upload/image"
+            :headers="{
+              Authorization: $store.state.user.token,
             }"
             :file-list="fileList"
             :limit="1"
@@ -57,9 +75,6 @@
         </el-form-item>
         <el-form-item label="出版社">
           <el-input v-model="formData.press" />
-        </el-form-item>
-        <el-form-item label="摘要">
-          <el-input v-model="formData.summary" type="textarea" :rows="4" />
         </el-form-item>
         <el-form-item label="备注信息">
           <el-input v-model="formData.remark" type="textarea" :rows="4" />
@@ -114,17 +129,25 @@ export default {
       dialogImageUrl: '',
       dialogVisible: false,
       disabled: false,
-      fileList: []
+      fileList: [],
+      categoryList:
+        (localStorage.getItem('category') &&
+          JSON.parse(localStorage.getItem('category'))) ||
+        []
     }
   },
   created() {
-    this.formData.logo = []
-    this.formData.bookUrl = ''
+    this.formData.cover = this.formData.cover && this.formData.cover.split(',')
+    this.formData.bookUrl = this.formData.bookUrl || ''
+    this.fileList = this.formData.bookUrl
+      ? [{ name: this.formData.bookUrl.slice(this.formData.bookUrl.lastIndexOf('/') + 1), url: this.formData.bookUrl }]
+      : []
   },
   mounted() {},
   methods: {
     handleAvatarSuccess(res, file) {
-      this.formData.logo.push(res.data)
+      if (res.code != 200) return this.$message.error(res.msg)
+      this.formData.cover.push(res.data.url)
     },
     beforeAvatarUpload(file) {
       const isLt2M = file.size / 1024 / 1024 < 1
@@ -136,11 +159,11 @@ export default {
     handleAvatarSuccess2(res, file) {
       if (res.code != 200) {
         this.formData.bookUrl = ''
-        this.$message.error(res.message)
+        this.$message.error(res.msg)
         this.fileList = []
         return
       }
-      this.formData.bookUrl = res.data
+      this.formData.bookUrl = res.data.url
     },
     beforeAvatarUpload2(file) {
       const isLt2M = file.size / 1024 / 1024 < 200
@@ -150,14 +173,14 @@ export default {
       return isLt2M
     },
     handleRemove(index) {
-      this.formData.logo.splice(index, 1)
+      this.formData.cover.splice(index, 1)
     },
     handlePictureCardPreview(index) {
-      this.dialogImageUrl = this.formData.logo[index]
+      this.dialogImageUrl = this.formData.cover[index]
       this.dialogVisible = true
     },
     handleDownload(index) {
-      window.open(this.formData.logo[index], '_blank')
+      window.open(this.formData.cover[index], '_blank')
     }
   }
 }

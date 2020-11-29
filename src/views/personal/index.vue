@@ -6,7 +6,9 @@
           <img :src="userDetail.avatar" alt="用户头像">
           <el-upload
             action="/api/upload/image"
-            :data="{ type: 'avatar' }"
+            :headers="{
+              Authorization: $store.state.user.token,
+            }"
             :show-file-list="false"
             :on-success="handleAvatarSuccess"
             :before-upload="beforeAvatarUpload"
@@ -70,7 +72,12 @@
             <el-form-item label="注册时间">
               {{ userDetail.createTime | parseTime }}
             </el-form-item>
-            <el-button v-if="editInfo" size="small" type="primary" @click="saveBasicInfo">保存</el-button>
+            <el-button
+              v-if="editInfo"
+              size="small"
+              type="primary"
+              @click="saveBasicInfo"
+            >保存</el-button>
             <el-button
               v-if="editInfo"
               size="small"
@@ -250,7 +257,8 @@ export default {
       )
     },
     handleAvatarSuccess(res, file) {
-      this.userDetail.avatar = res.data
+      if (res.code != 200) return this.$message.error(res.msg)
+      this.userDetail.avatar = res.data.url
     },
     beforeAvatarUpload(file) {
       const isLt2M = file.size / 1024 / 1024 < 1
@@ -394,7 +402,7 @@ export default {
         if (res.code != 200) {
           return this.$notify({
             title: '失败',
-            message: res.message,
+            message: res.msg,
             type: 'error'
           })
         }

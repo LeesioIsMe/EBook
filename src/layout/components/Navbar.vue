@@ -24,11 +24,11 @@
 
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
         <div class="avatar-wrapper">
-          <img :src="avatar" class="user-avatar" />
+          <img :src="avatar" class="user-avatar">
           <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown">
-          <el-dropdown-item :disabled="true">{{name}}</el-dropdown-item>
+          <el-dropdown-item :disabled="true">{{ name }}</el-dropdown-item>
           <el-dropdown-item @click.native="changePasswordModal">修改密码</el-dropdown-item>
           <el-dropdown-item divided @click.native="logout">
             <span style="display:block;">注销</span>
@@ -89,44 +89,16 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-import Breadcrumb from "@/components/Breadcrumb";
-import Hamburger from "@/components/Hamburger";
-import ErrorLog from "@/components/ErrorLog";
-import Screenfull from "@/components/Screenfull";
-import SizeSelect from "@/components/SizeSelect";
-import Search from "@/components/HeaderSearch";
-import MD5 from "md5";
-import { validPassword } from "@/utils/validate";
+import { mapGetters } from 'vuex'
+import Breadcrumb from '@/components/Breadcrumb'
+import Hamburger from '@/components/Hamburger'
+import ErrorLog from '@/components/ErrorLog'
+import Screenfull from '@/components/Screenfull'
+import SizeSelect from '@/components/SizeSelect'
+import Search from '@/components/HeaderSearch'
+import MD5 from 'md5'
+import { validPassword } from '@/utils/validate'
 export default {
-  data() {
-    const validatePassword = (rule, value, callback) => {
-      if (!validPassword(value)) {
-        callback(new Error("密码由8～20位数字、字母组成，请检查格式"));
-      } else {
-        callback();
-      }
-    };
-    return {
-      isChangePasswordModal: false,
-      changeFormData: {
-        passwordOld: "",
-        passwordNew: "",
-        passwordRepeat: ""
-      },
-      rules: {
-        passwordOld: [{ required: true, message: "旧密码不能为空" }],
-        passwordNew: [
-          { required: true, message: "新密码不能为空" },
-          { trigger: "blur", validator: validatePassword }
-        ],
-        passwordRepeat: [
-          { required: true, message: "重复密码不能为空" },
-          { trigger: "blur", validator: validatePassword }
-        ]
-      }
-    };
-  },
   components: {
     Breadcrumb,
     Hamburger,
@@ -135,29 +107,57 @@ export default {
     SizeSelect,
     Search
   },
+  data() {
+    const validatePassword = (rule, value, callback) => {
+      if (!validPassword(value)) {
+        callback(new Error('密码由8～20位数字、字母组成，请检查格式'))
+      } else {
+        callback()
+      }
+    }
+    return {
+      isChangePasswordModal: false,
+      changeFormData: {
+        passwordOld: '',
+        passwordNew: '',
+        passwordRepeat: ''
+      },
+      rules: {
+        passwordOld: [{ required: true, message: '旧密码不能为空' }],
+        passwordNew: [
+          { required: true, message: '新密码不能为空' },
+          { trigger: 'blur', validator: validatePassword }
+        ],
+        passwordRepeat: [
+          { required: true, message: '重复密码不能为空' },
+          { trigger: 'blur', validator: validatePassword }
+        ]
+      }
+    }
+  },
   computed: {
-    ...mapGetters(["name", "sidebar", "avatar", "device"])
+    ...mapGetters(['name', 'sidebar', 'avatar', 'device'])
   },
   methods: {
     changePasswordModal() {
-      this.isChangePasswordModal = true;
+      this.isChangePasswordModal = true
     },
     changeSubmit() {
       this.$refs.changeForm.validate(valid => {
         if (valid) {
           const userInfo =
-            localStorage.getItem("userInfo") &&
-            JSON.parse(localStorage.getItem("userInfo"));
+            localStorage.getItem('userInfo') &&
+            JSON.parse(localStorage.getItem('userInfo'))
           if (
             this.changeFormData.passwordNew !=
             this.changeFormData.passwordRepeat
           ) {
             return this.$message({
-              message: "新密码两次输入不一致",
-              type: "error"
-            });
+              message: '新密码两次输入不一致',
+              type: 'error'
+            })
           }
-          this.$post("/api/users/changePassword", {
+          this.$post('/api/users/changePassword', {
             id: userInfo.id,
             old: MD5(this.changeFormData.passwordOld),
             new: MD5(this.changeFormData.passwordNew),
@@ -165,37 +165,37 @@ export default {
           }).then(res => {
             if (res.code != 200) {
               return this.$notify({
-                title: "失败",
-                message: res.message,
-                type: "error"
-              });
+                title: '失败',
+                message: res.msg,
+                type: 'error'
+              })
             }
             this.$notify({
-              title: "成功",
-              message: res.message + "，您需要重新登陆...即将跳转",
-              type: "success",
+              title: '成功',
+              message: res.msg + '，您需要重新登陆...即将跳转',
+              type: 'success',
               duration: 2000,
-              onClose: async () => {
-                await this.$store.dispatch("user/logout");
-                this.$router.push(`/login?redirect=${this.$route.fullPath}`);
+              onClose: async() => {
+                await this.$store.dispatch('user/logout')
+                this.$router.push(`/login?redirect=${this.$route.fullPath}`)
               }
-            });
-            this.isChangePasswordModal = false;
-          });
+            })
+            this.isChangePasswordModal = false
+          })
         } else {
-          return false;
+          return false
         }
-      });
+      })
     },
     toggleSideBar() {
-      this.$store.dispatch("app/toggleSideBar");
+      this.$store.dispatch('app/toggleSideBar')
     },
     async logout() {
-      await this.$store.dispatch("user/logout");
-      this.$router.push(`/login?redirect=${this.$route.fullPath}`);
+      await this.$store.dispatch('user/logout')
+      this.$router.push(`/login?redirect=${this.$route.fullPath}`)
     }
   }
-};
+}
 </script>
 
 <style lang="scss" scoped>

@@ -2,7 +2,7 @@
   <div class="wrapper">
     <div class="book-detail">
       <div class="logo">
-        <img :src="bookData.bookUrl" alt="预览图">
+        <img :src="bookData.cover" alt="预览图">
       </div>
       <div class="info">
         <p><label>书名</label>{{ bookData.bookName }}</p>

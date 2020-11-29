@@ -447,7 +447,7 @@ export default {
           if (res.code != 200) {
             return this.$notify({
               title: '失败',
-              message: res.message,
+              message: res.msg,
               type: 'error'
             })
           }

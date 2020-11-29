@@ -77,7 +77,9 @@
     >
       <el-table-column align="center" label="序号" width="80px">
         <template slot-scope="{ $index }">
-          <span>{{ (listQuery.pageNum - 1) * listQuery.pageSize + $index + 1 }}</span>
+          <span>{{
+            (listQuery.pageNum - 1) * listQuery.pageSize + $index + 1
+          }}</span>
         </template>
       </el-table-column>
       <el-table-column label="用户类型" width="150px">
@@ -282,7 +284,8 @@ export default {
       listQuery: {
         pageNum: 1,
         pageSize: 20,
-        keyword: '', categoryId: ''
+        keyword: '',
+        categoryId: ''
       },
       downloadLoading: false,
       typeList: [
@@ -369,7 +372,7 @@ export default {
     editThis(row) {
       this.addEditModal = true
       this.title = '用户编辑'
-      this.formData = Object.assign(row, {})
+      this.formData = Object.assign({}, row)
       this.type = 1
     },
     detailThis(row) {
@@ -398,7 +401,7 @@ export default {
     },
     getList() {
       this.listLoading = true
-      this.$get('/api/users/getAll', {
+      this.$get('/api/usere/findUserList', {
         pageNow: this.listQuery.pageNum,
         pageSize: this.listQuery.pageSize,
         ...this.listQuery
@@ -408,7 +411,7 @@ export default {
           if (res.code != 200) {
             return this.$notify({
               title: '失败',
-              message: res.message,
+              message: res.msg,
               type: 'error'
             })
           }

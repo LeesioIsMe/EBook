@@ -30,6 +30,14 @@
         icon="el-icon-search"
         @click="handleFilter"
       >搜索</el-button>
+      <el-button
+        v-if="isShowAdd"
+        class="filter-item"
+        style="margin-left: 10px"
+        type="primary"
+        icon="el-icon-edit"
+        @click="addBookTrigger"
+      >添加</el-button>
     </div>
 
     <el-table
@@ -57,11 +65,11 @@
         <template slot-scope="{ row }">
           <span>
             <el-image
-              v-if="row.bookUrl"
+              v-if="row.cover"
               style="width: 50px; height: 50px"
-              :src="row.bookUrl"
+              :src="row.cover"
               lazy
-              :preview-src-list="[row.bookUrl]"
+              :preview-src-list="[row.cover]"
             />
             <span v-else>-</span>
           </span>
@@ -69,7 +77,7 @@
       </el-table-column>
       <el-table-column label="分类" width="150px">
         <template slot-scope="{ row }">
-          <span>{{ row.category }}</span>
+          <span>{{ row.categoryName }}</span>
         </template>
       </el-table-column>
       <el-table-column label="作者" width="150px" align="center">
@@ -169,6 +177,17 @@
         <el-button size="small" @click="backModal = false">取消</el-button>
       </div>
     </el-dialog>
+    <template v-if="addEditModal">
+      <book-add-edit
+        :type="type"
+        :title="title"
+        :rules="rules"
+        :modal="addEditModal"
+        :form-data="formData"
+        @saveForm="saveForm"
+        @closeModal="addEditModal = false"
+      />
+    </template>
   </div>
 </template>
 <script>
@@ -186,13 +205,23 @@ export default {
   components: {
     Pagination,
     'book-detail': () => import('@/components/View/Book/detail'),
-    'audit-history': () => import('@/components/View/Book/auditHistory')
+    'audit-history': () => import('@/components/View/Book/auditHistory'),
+    'book-add-edit': () => import('@/components/View/Book/index')
   },
   directives: { waves },
   filters: {},
+  props: {
+    isShowAdd: {
+      type: Boolean,
+      default: true
+    }
+  },
   data() {
     return {
-      categoryList: [],
+      categoryList:
+        (localStorage.getItem('category') &&
+          JSON.parse(localStorage.getItem('category'))) ||
+        [],
       tableKey: 0,
       list: [],
       total: 0,
@@ -210,7 +239,10 @@ export default {
       historyList: [],
       detailModal: false,
       backModal: false,
-      backInfo: ''
+      backInfo: '',
+      title: '',
+      addEditModal: false,
+      formData: {}
     }
   },
   watch: {
@@ -222,19 +254,16 @@ export default {
     },
     backModal(newV) {
       if (!newV) (this.modalData = {}), (this.backInfo = '')
+    },
+    addEditModal(newV) {
+      if (!newV) (this.formData = {}), (this.title = ''), (this.type = 0)
     }
   },
   created() {
-    this.getCategoryList()
     this.getList()
   },
   mounted() {},
   methods: {
-    getCategoryList() {
-      this.$get('/api/book/getCategory').then((res) => {
-        this.categoryList = res.data
-      })
-    },
     historyThis(row) {
       this.historyModal = true
       this.$get('/api/book/getBookFindingsAll/' + row.id).then((res) => {
@@ -262,10 +291,10 @@ export default {
     },
     auditThisConnfirm(row, backStatus) {
       this.$post('/api/book/examine', {
-        status: 2,
+        status: backStatus ? 3 : 2,
         bookId: row.id,
-        createUser: this.$store.state.id,
-        findings: backStatus == 3 ? this.backInfo : '通过'
+        createUser: this.$store.state.user.id,
+        findings: backStatus ? this.backInfo : '通过'
       }).then((res) => {
         if (res.code != 200) {
           return this.$message.error(res.msg)
@@ -307,7 +336,7 @@ export default {
           if (res.code != 200) {
             return this.$notify({
               title: '失败',
-              message: res.message,
+              message: res.msg,
               type: 'error'
             })
           }
@@ -326,8 +355,8 @@ export default {
     handleAvatarSuccess(res, file) {
       this.$nextTick(() => {
         this.isAddModal
-          ? (this.addFormData.logo = res.data)
-          : (this.editFormData.logo = res.data)
+          ? (this.addFormData.logo = res.data.url)
+          : (this.editFormData.logo = res.data.url)
       })
     },
     beforeAvatarUpload(file) {
@@ -337,6 +366,28 @@ export default {
         this.$message.error('上传预览图大小不能超过 1MB!')
       }
       return isLt2M
+    },
+    addBookTrigger() {
+      this.addEditModal = true
+      this.title = '资源添加'
+      this.type = 0
+    },
+    saveForm() {
+      console.log(this.formData)
+      var params = Object.assign({}, this.formData)
+      params.cover = (params.cover && params.cover.join(',')) || ''
+      params.categoryId = params.categoryId
+        ? params.categoryId[params.categoryId.length - 1]
+        : ''
+      this.$post('/api/book/add', params).then((res) => {
+        console.log(res)
+        if (res.code != 200) {
+          return this.$message.error(res.msg)
+        }
+        this.$message.success('添加成功')
+        this.addEditModal = false
+        this.getList()
+      })
     }
   }
 }

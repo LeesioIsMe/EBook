@@ -10,9 +10,14 @@
         @keyup.enter.native="handleFilter"
       />
       <el-cascader
-        v-model="listQuery.category"
+        v-model="listQuery.categoryId"
         :options="categoryList"
-        :props="{ checkStrictly: true }"
+        :props="{
+          label: 'name',
+          value: 'id',
+          children: 'children',
+          checkStrictly: true,
+        }"
         placeholder="图书检索"
         class="filter-item"
         clearable
@@ -25,14 +30,6 @@
         icon="el-icon-search"
         @click="handleFilter"
       >搜索</el-button>
-      <el-button
-        v-if="isShowAdd"
-        class="filter-item"
-        style="margin-left: 10px"
-        type="primary"
-        icon="el-icon-edit"
-        @click="addBookTrigger"
-      >添加</el-button>
     </div>
 
     <el-table
@@ -46,7 +43,16 @@
     >
       <el-table-column align="center" label="序号" width="80px">
         <template slot-scope="{ $index }">
-          <span>{{ (listQuery.pageNum - 1) * listQuery.pageSize + $index + 1 }}</span>
+          <span>{{
+            (listQuery.pageNum - 1) * listQuery.pageSize + $index + 1
+          }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" width="100px" align="center">
+        <template slot-scope="{ row }">
+          <span>{{
+            (row.status == 1) | statusFilter(row.status, row.upDown)
+          }}</span>
         </template>
       </el-table-column>
       <el-table-column label="图书名称" width="200px">
@@ -58,11 +64,11 @@
         <template slot-scope="{ row }">
           <span>
             <el-image
-              v-if="row.poster"
+              v-if="row.bookUrl"
               style="width: 50px; height: 50px"
-              :src="row.poster"
+              :src="row.bookUrl"
               lazy
-              :preview-src-list="[row.poster]"
+              :preview-src-list="[row.bookUrl]"
             />
             <span v-else>-</span>
           </span>
@@ -70,7 +76,7 @@
       </el-table-column>
       <el-table-column label="分类" width="150px">
         <template slot-scope="{ row }">
-          <span>{{ row.category }}</span>
+          <span>{{ row.categoryName }}</span>
         </template>
       </el-table-column>
       <el-table-column label="作者" width="150px" align="center">
@@ -80,12 +86,7 @@
       </el-table-column>
       <el-table-column label="出版社" align="center" width="200px">
         <template slot-scope="{ row }">
-          <span>{{ row.publishOrgName }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="年份" width="150px" align="center">
-        <template slot-scope="{ row }">
-          <span>{{ row.year | parseTime }}</span>
+          <span>{{ row.press }}</span>
         </template>
       </el-table-column>
       <el-table-column label="备注" width="200px" align="center">
@@ -100,7 +101,7 @@
         align="center"
       >
         <template slot-scope="{ row }">
-          <span>{{ row.uploaderName }}</span>
+          <span>{{ row.createUserName }}</span>
         </template>
       </el-table-column>
       <el-table-column label="上传时间" width="150px" align="center">
@@ -110,9 +111,16 @@
           }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="修改时间" width="150px" align="center">
+        <template slot-scope="{ row }">
+          <span>{{
+            row.modifiedTime | parseTime("{y}-{m}-{d} {h}:{i}:{s}")
+          }}</span>
+        </template>
+      </el-table-column>
       <el-table-column
         label="操作"
-        align="center"
+        align="left"
         width="300"
         fixed="right"
         class-name="small-padding fixed-width"
@@ -129,10 +137,11 @@
             @click="editThis(row)"
           >修改</el-button>
           <el-button
+            v-if="row.status == 2"
             size="mini"
-            type="warning"
+            :type="row.upDown == 1 ? 'warning' : 'success'"
             @click="upDownThis(row)"
-          >下架</el-button>
+          >{{ row.upDown == 1 ? "下架" : "上架" }}</el-button>
           <el-button
             size="mini"
             type="danger"
@@ -158,7 +167,6 @@
         :rules="rules"
         :modal="addEditModal"
         :form-data="formData"
-        @saveForm="saveForm"
         @editForm="editForm"
         @closeModal="addEditModal = false"
       />
@@ -183,7 +191,19 @@ export default {
     'book-add-edit': () => import('@/components/View/Book/index')
   },
   directives: { waves },
-  filters: {},
+  filters: {
+    statusFilter(data, status, upDown) {
+      if (status == 1) {
+        return '待审核'
+      } else if (status == 2 && upDown == 1) {
+        return '审核通过-已上架'
+      } else if (status == 2 && upDown == 2) {
+        return '审核通过-已下架'
+      } else {
+        return '被驳回'
+      }
+    }
+  },
   props: {
     isShowAdd: {
       type: Boolean,
@@ -196,42 +216,10 @@ export default {
   },
   data() {
     return {
-      categoryList: [
-        {
-          id: '1',
-          label: '一级分类',
-          value: '1',
-          children: [
-            {
-              id: '1-1',
-              label: '二级分类1',
-              value: '1-1',
-              children: [
-                {
-                  id: '1-1-1',
-                  label: '三级分类1',
-                  value: '1-1-1'
-                },
-                {
-                  id: '1-1-2',
-                  label: '三级分类2',
-                  value: '1-1-2'
-                }
-              ]
-            },
-            {
-              id: '1-2',
-              label: '二级分类2',
-              value: '1-2'
-            }
-          ]
-        },
-        {
-          id: '2',
-          label: '一级分类2',
-          value: '2'
-        }
-      ],
+      categoryList:
+        (localStorage.getItem('category') &&
+          JSON.parse(localStorage.getItem('category'))) ||
+        [],
       tableKey: 0,
       list: [],
       total: 0,
@@ -239,7 +227,8 @@ export default {
       listQuery: {
         pageNum: 1,
         pageSize: 20,
-        keyword: '', categoryId: ''
+        keyword: '',
+        categoryId: ''
       },
       // 弹窗中的数据
       rules: {},
@@ -267,14 +256,18 @@ export default {
   mounted() {},
   methods: {
     editThis(row) {
-      this.addEditModal = true
-      this.title = '资源编辑'
-      this.formData = Object.assign(row, {})
-      this.type = 1
+      this.$get('/api/book/getInfo/' + row.id).then((res) => {
+        this.addEditModal = true
+        this.title = '资源编辑'
+        this.type = 1
+        this.formData = res.data
+      })
     },
     detailThis(row) {
       this.detailModal = true
-      this.modalData = row
+      this.$get('/api/book/getInfo/' + row.id).then((res) => {
+        this.modalData = res.data
+      })
     },
     upDownThis(row) {
       this.$confirm('是否要删除下架当前资源', '提示', {
@@ -283,12 +276,23 @@ export default {
         type: 'warning'
       })
         .then(() => {
-          this.$message.success('下架成功')
-          this.getList()
+          this.upDownThisComfirm(row)
         })
         .catch(() => {
           this.$message.info('操作取消')
         })
+    },
+    upDownThisComfirm(row) {
+      this.$post('/api/book/upDown', {
+        id: row.id,
+        upDown: row.upDown == 1 ? 2 : 1
+      }).then((res) => {
+        if (res.code != 200) {
+          return this.$message.error(res.msg)
+        }
+        this.$message.success((row.upDown == 1 ? '下架' : '上架') + '成功')
+        this.getList()
+      })
     },
     deleteThis(row) {
       this.$confirm('是否要删除当前资源', '提示', {
@@ -297,34 +301,46 @@ export default {
         type: 'warning'
       })
         .then(() => {
-          this.$message.success('删除成功')
-          this.getList()
+          this.deleteThisConfirm(row)
         })
         .catch(() => {
           this.$message.info('操作取消')
         })
+    },
+    deleteThisConfirm(row) {
+      this.$delete('/api/book/delete/' + row.id).then((res) => {
+        if (res.code != 200) {
+          return this.$message.error(res.msg)
+        }
+        this.$message.success('删除成功')
+        this.getList()
+      })
     },
     handleFilter() {
       this.listQuery.pageNum = 1
       this.getList()
     },
     getList() {
+      console.log(this.listQuery)
+      var params = { ...this.listQuery }
+      params.categoryId = params.categoryId
+        ? params.categoryId[params.categoryId.length - 1]
+        : ''
       this.listLoading = true
-      this.$get('/api/users/getAll', {
-        pageNow: this.listQuery.pageNum,
-        pageSize: this.listQuery.pageSize,
-        ...this.listQuery
+      this.$get('/api/book/findBookList', {
+        status: '',
+        ...params
       })
         .then((res) => {
           this.listLoading = false
           if (res.code != 200) {
             return this.$notify({
               title: '失败',
-              message: res.message,
+              message: res.msg,
               type: 'error'
             })
           }
-          this.list = res.data.list
+          this.list = res.data.rows
           this.total = res.data.total
         })
         .catch((err) => {
@@ -336,20 +352,22 @@ export default {
           console.log(err)
         })
     },
-    addBookTrigger() {
-      this.addEditModal = true
-      this.title = '资源添加'
-      this.type = 0
-    },
-    saveForm() {
-      console.log(this.formData)
-      this.$message.success('添加成功')
-      this.addEditModal = false
-    },
     editForm() {
       console.log(this.formData)
-      this.$message.success('编辑成功')
-      this.addEditModal = false
+      var params = Object.assign({}, this.formData)
+      params.cover = (params.cover && params.cover.join(',')) || ''
+      params.categoryId = params.categoryId
+        ? params.categoryId[params.categoryId.length - 1]
+        : ''
+      this.$post('/api/book/edit', params).then((res) => {
+        console.log(res)
+        if (res.code != 200) {
+          return this.$message.error(res.msg)
+        }
+        this.$message.success('编辑成功')
+        this.addEditModal = false
+        this.getList()
+      })
     }
   }
 }
