@@ -55,7 +55,7 @@ const actions = {
 
         data.roles = [data.type == 0 ? 'admin' : 'user']
 
-        const { roles, nickname, logo, id } = data
+        const { roles, nickname, avatar, id } = data
 
         // roles must be a non-empty array
         if (!roles || roles.length <= 0) {
@@ -63,7 +63,7 @@ const actions = {
         }
         commit('SET_ROLES', roles)
         commit('SET_NAME', nickname)
-        commit('SET_AVATAR', logo)
+        commit('SET_AVATAR', avatar)
         commit('SET_USERNO', id)
         resolve(data)
       } catch (error) {

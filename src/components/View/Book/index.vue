@@ -47,7 +47,7 @@
               :src="v"
               alt=""
               @click="handleDownload(i)"
-            >
+            />
             <i class="icon-remove el-icon-close" @click="handleRemove(i)" />
           </div>
         </el-form-item>
@@ -85,105 +85,121 @@
           type="primary"
           size="small"
           @click="$emit(type == 0 ? 'saveForm' : 'editForm')"
-        >确定</el-button>
+          >确定</el-button
+        >
         <el-button size="small" @click="$emit('closeModal')">取消</el-button>
       </div>
     </el-dialog>
     <el-dialog :visible.sync="dialogVisible">
-      <img width="100%" :src="dialogImageUrl" alt="">
+      <img width="100%" :src="dialogImageUrl" alt="" />
     </el-dialog>
   </div>
 </template>
 <script>
 export default {
-  name: 'BookDetail',
+  name: "BookDetail",
   components: {},
   props: {
     type: {
       type: Number,
-      default: 0 // 0添加 1编辑
+      default: 0, // 0添加 1编辑
     },
     rules: {
       type: Object,
       default: () => {
-        return {}
-      }
+        return {};
+      },
     },
     title: {
       type: String,
-      default: ''
+      default: "",
     },
     modal: {
       type: Boolean,
-      default: false
+      default: false,
     },
     formData: {
       type: Object,
       default: () => {
-        return {}
-      }
-    }
+        return {};
+      },
+    },
   },
   data() {
     return {
-      dialogImageUrl: '',
+      dialogImageUrl: "",
       dialogVisible: false,
       disabled: false,
       fileList: [],
       categoryList:
-        (localStorage.getItem('category') &&
-          JSON.parse(localStorage.getItem('category'))) ||
-        []
-    }
+        (localStorage.getItem("category") &&
+          JSON.parse(localStorage.getItem("category"))) ||
+        [],
+    };
   },
   created() {
-    this.formData.cover = this.formData.cover && this.formData.cover.split(',')
-    this.formData.bookUrl = this.formData.bookUrl || ''
-    this.fileList = this.formData.bookUrl
-      ? [{ name: this.formData.bookUrl.slice(this.formData.bookUrl.lastIndexOf('/') + 1), url: this.formData.bookUrl }]
-      : []
+    console.log(this.formData);
+    if (this.type == 1) {
+      this.formData.cover =
+        (this.formData.cover && this.formData.cover.split(",")) || [];
+      this.formData.bookUrl = this.formData.bookUrl || "";
+      this.fileList = this.formData.bookUrl
+        ? [
+            {
+              name: this.formData.bookUrl.slice(
+                this.formData.bookUrl.lastIndexOf("/") + 1
+              ),
+              url: this.formData.bookUrl,
+            },
+          ]
+        : [];
+    } else {
+      this.formData.cover = [];
+      this.formData.bookUrl = "";
+      this.formData.fileList = [];
+    }
   },
   mounted() {},
   methods: {
     handleAvatarSuccess(res, file) {
-      if (res.code != 200) return this.$message.error(res.msg)
-      this.formData.cover.push(res.data.url)
+      if (res.code != 200) return this.$message.error(res.msg);
+      this.formData.cover.push(res.data.url);
     },
     beforeAvatarUpload(file) {
-      const isLt2M = file.size / 1024 / 1024 < 1
+      const isLt2M = file.size / 1024 / 1024 < 1;
       if (!isLt2M) {
-        this.$message.error('上传预览图大小不能超过 1MB!')
+        this.$message.error("上传预览图大小不能超过 1MB!");
       }
-      return isLt2M
+      return isLt2M;
     },
     handleAvatarSuccess2(res, file) {
       if (res.code != 200) {
-        this.formData.bookUrl = ''
-        this.$message.error(res.msg)
-        this.fileList = []
-        return
+        this.formData.bookUrl = "";
+        this.$message.error(res.msg);
+        this.fileList = [];
+        return;
       }
-      this.formData.bookUrl = res.data.url
+      this.formData.bookUrl = res.data.url;
     },
     beforeAvatarUpload2(file) {
-      const isLt2M = file.size / 1024 / 1024 < 200
+      const isLt2M = file.size / 1024 / 1024 < 200;
       if (!isLt2M) {
-        this.$message.error('上传文件大小不能超过 200M')
+        this.$message.error("上传文件大小不能超过 200M");
       }
-      return isLt2M
+      return isLt2M;
     },
     handleRemove(index) {
-      this.formData.cover.splice(index, 1)
+      this.formData.cover.splice(index, 1);
     },
     handlePictureCardPreview(index) {
-      this.dialogImageUrl = this.formData.cover[index]
-      this.dialogVisible = true
+      this.dialogImageUrl = this.formData.cover[index];
+      this.dialogVisible = true;
     },
     handleDownload(index) {
-      window.open(this.formData.cover[index], '_blank')
-    }
-  }
-}
+      window.open(this.formData.cover[index], "_blank");
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>

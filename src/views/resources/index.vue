@@ -29,7 +29,8 @@
         type="primary"
         icon="el-icon-search"
         @click="handleFilter"
-      >搜索</el-button>
+        >搜索</el-button
+      >
       <el-button
         v-if="isShowAdd"
         class="filter-item"
@@ -37,7 +38,8 @@
         type="primary"
         icon="el-icon-edit"
         @click="addBookTrigger"
-      >添加</el-button>
+        >添加</el-button
+      >
     </div>
 
     <el-table
@@ -47,6 +49,8 @@
       border
       fit
       highlight-current-row
+      
+      tooltip-effect="dark" show-overflow-tooltip
       style="width: 100%"
     >
       <el-table-column align="center" label="序号" width="80px">
@@ -67,9 +71,9 @@
             <el-image
               v-if="row.cover"
               style="width: 50px; height: 50px"
-              :src="row.cover"
+              :src="row.cover && row.cover.split(',')[0]"
               lazy
-              :preview-src-list="[row.cover]"
+              :preview-src-list="row.cover && row.cover.split(',')"
             />
             <span v-else>-</span>
           </span>
@@ -128,21 +132,15 @@
       >
         <template slot-scope="{ row }">
           <el-button size="mini" @click="historyThis(row)">历史</el-button>
-          <el-button
-            size="mini"
-            type="primary"
-            @click="detailThis(row)"
-          >查看</el-button>
-          <el-button
-            size="mini"
-            type="success"
-            @click="passThis(row)"
-          >通过</el-button>
-          <el-button
-            size="mini"
-            type="danger"
-            @click="backThis(row)"
-          >驳回</el-button>
+          <el-button size="mini" type="primary" @click="detailThis(row)"
+            >查看</el-button
+          >
+          <el-button size="mini" type="success" @click="passThis(row)"
+            >通过</el-button
+          >
+          <el-button size="mini" type="danger" @click="backThis(row)"
+            >驳回</el-button
+          >
         </template>
       </el-table-column>
     </el-table>
@@ -169,11 +167,9 @@
         placeholder="请输入驳回意见"
       />
       <div slot="footer">
-        <el-button
-          type="primary"
-          size="small"
-          @click="confirmBack"
-        >确定</el-button>
+        <el-button type="primary" size="small" @click="confirmBack"
+          >确定</el-button
+        >
         <el-button size="small" @click="backModal = false">取消</el-button>
       </div>
     </el-dialog>
@@ -195,32 +191,32 @@ import {
   validUsername,
   validPhone,
   validUserNo,
-  validPassword
-} from '@/utils/validate'
-import waves from '@/directive/waves' // waves directive
-import { parseTime } from '@/utils'
-import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+  validPassword,
+} from "@/utils/validate";
+import waves from "@/directive/waves"; // waves directive
+import { parseTime } from "@/utils";
+import Pagination from "@/components/Pagination"; // secondary package based on el-pagination
 export default {
-  name: 'User',
+  name: "Resources",
   components: {
     Pagination,
-    'book-detail': () => import('@/components/View/Book/detail'),
-    'audit-history': () => import('@/components/View/Book/auditHistory'),
-    'book-add-edit': () => import('@/components/View/Book/index')
+    "book-detail": () => import("@/components/View/Book/detail"),
+    "audit-history": () => import("@/components/View/Book/auditHistory"),
+    "book-add-edit": () => import("@/components/View/Book/index"),
   },
   directives: { waves },
   filters: {},
   props: {
     isShowAdd: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
   data() {
     return {
       categoryList:
-        (localStorage.getItem('category') &&
-          JSON.parse(localStorage.getItem('category'))) ||
+        (localStorage.getItem("category") &&
+          JSON.parse(localStorage.getItem("category"))) ||
         [],
       tableKey: 0,
       list: [],
@@ -229,8 +225,8 @@ export default {
       listQuery: {
         pageNum: 1,
         pageSize: 20,
-        keyword: '',
-        categoryId: ''
+        keyword: "",
+        categoryId: "",
       },
       // 弹窗中的数据
       rules: {},
@@ -239,158 +235,158 @@ export default {
       historyList: [],
       detailModal: false,
       backModal: false,
-      backInfo: '',
-      title: '',
+      backInfo: "",
+      title: "",
       addEditModal: false,
-      formData: {}
-    }
+      formData: {},
+    };
   },
   watch: {
     historyModal(newV) {
-      if (!newV) (this.modalData = {}), (this.historyList = [])
+      if (!newV) (this.modalData = {}), (this.historyList = []);
     },
     detailModal(newV) {
-      if (!newV) this.modalData = {}
+      if (!newV) this.modalData = {};
     },
     backModal(newV) {
-      if (!newV) (this.modalData = {}), (this.backInfo = '')
+      if (!newV) (this.modalData = {}), (this.backInfo = "");
     },
     addEditModal(newV) {
-      if (!newV) (this.formData = {}), (this.title = ''), (this.type = 0)
-    }
+      if (!newV) (this.formData = {}), (this.title = ""), (this.type = 0);
+    },
   },
   created() {
-    this.getList()
+    this.getList();
   },
   mounted() {},
   methods: {
     historyThis(row) {
-      this.historyModal = true
-      this.$get('/api/book/getBookFindingsAll/' + row.id).then((res) => {
-        this.historyList = res.data
-      })
+      this.historyModal = true;
+      this.$get("/api/book/getBookFindingsAll/" + row.id).then((res) => {
+        this.historyList = res.data;
+      });
     },
     detailThis(row) {
-      this.detailModal = true
-      this.$get('/api/book/getInfo/' + row.id).then((res) => {
-        this.modalData = res.data
-      })
+      this.detailModal = true;
+      this.$get("/api/book/getInfo/" + row.id).then((res) => {
+        this.modalData = res.data;
+      });
     },
     passThis(row) {
-      this.$confirm('是否通过审核', '提示', {
-        confirmButtonText: '是',
-        cancelButtonText: '否',
-        type: 'warning'
+      this.$confirm("是否通过审核", "提示", {
+        confirmButtonText: "是",
+        cancelButtonText: "否",
+        type: "warning",
       })
         .then(() => {
-          this.auditThisConnfirm(row)
+          this.auditThisConnfirm(row);
         })
         .catch(() => {
-          this.$message.info('操作取消')
-        })
+          this.$message.info("操作取消");
+        });
     },
     auditThisConnfirm(row, backStatus) {
-      this.$post('/api/book/examine', {
+      this.$post("/api/book/examine", {
         status: backStatus ? 3 : 2,
         bookId: row.id,
         createUser: this.$store.state.user.id,
-        findings: backStatus ? this.backInfo : '通过'
+        findings: backStatus ? this.backInfo : "通过",
       }).then((res) => {
         if (res.code != 200) {
-          return this.$message.error(res.msg)
+          return this.$message.error(res.msg);
         }
-        this.$message.success(backStatus ? '驳回成功' : '审核通过')
-        this.getList()
-      })
+        this.$message.success(backStatus ? "驳回成功" : "审核通过");
+        this.getList();
+      });
     },
     backThis(row) {
-      this.backModal = true
-      this.modalData = row
+      this.backModal = true;
+      this.modalData = row;
     },
     confirmBack() {
       if (this.backInfo.trim().length == 0) {
-        return this.$message.warning('驳回信息不能改为空')
+        return this.$message.warning("驳回信息不能改为空");
       }
-      this.auditThisConnfirm(this.modalData, true)
-      this.backModal = false
-      this.getList()
+      this.auditThisConnfirm(this.modalData, true);
+      this.backModal = false;
+      this.getList();
     },
 
     handleFilter() {
-      this.listQuery.pageNum = 1
-      this.getList()
+      this.listQuery.pageNum = 1;
+      this.getList();
     },
     getList() {
-      console.log(this.listQuery)
-      var params = { ...this.listQuery }
+      console.log(this.listQuery);
+      var params = { ...this.listQuery };
       params.categoryId = params.categoryId
         ? params.categoryId[params.categoryId.length - 1]
-        : ''
-      this.listLoading = true
-      this.$get('/api/book/findBookList', {
+        : "";
+      this.listLoading = true;
+      this.$get("/api/book/findBookList", {
         status: 1,
-        ...params
+        ...params,
       })
         .then((res) => {
-          this.listLoading = false
+          this.listLoading = false;
           if (res.code != 200) {
             return this.$notify({
-              title: '失败',
+              title: "失败",
               message: res.msg,
-              type: 'error'
-            })
+              type: "error",
+            });
           }
-          this.list = res.data.rows
-          this.total = res.data.total
+          this.list = res.data.rows;
+          this.total = res.data.total;
         })
         .catch((err) => {
-          this.listLoading = false
+          this.listLoading = false;
           this.$message({
-            message: '网络错误，请稍后再试',
-            type: 'warning'
-          })
-          console.log(err)
-        })
+            message: "网络错误，请稍后再试",
+            type: "warning",
+          });
+          console.log(err);
+        });
     },
     handleAvatarSuccess(res, file) {
       this.$nextTick(() => {
         this.isAddModal
           ? (this.addFormData.logo = res.data.url)
-          : (this.editFormData.logo = res.data.url)
-      })
+          : (this.editFormData.logo = res.data.url);
+      });
     },
     beforeAvatarUpload(file) {
-      const isLt2M = file.size / 1024 / 1024 < 1
+      const isLt2M = file.size / 1024 / 1024 < 1;
 
       if (!isLt2M) {
-        this.$message.error('上传预览图大小不能超过 1MB!')
+        this.$message.error("上传预览图大小不能超过 1MB!");
       }
-      return isLt2M
+      return isLt2M;
     },
     addBookTrigger() {
-      this.addEditModal = true
-      this.title = '资源添加'
-      this.type = 0
+      this.addEditModal = true;
+      this.title = "资源添加";
+      this.type = 0;
     },
     saveForm() {
-      console.log(this.formData)
-      var params = Object.assign({}, this.formData)
-      params.cover = (params.cover && params.cover.join(',')) || ''
+      console.log(this.formData);
+      var params = Object.assign({}, this.formData);
+      params.cover = (params.cover && params.cover.join(",")) || "";
       params.categoryId = params.categoryId
         ? params.categoryId[params.categoryId.length - 1]
-        : ''
-      this.$post('/api/book/add', params).then((res) => {
-        console.log(res)
+        : "";
+      this.$post("/api/book/add", params).then((res) => {
+        console.log(res);
         if (res.code != 200) {
-          return this.$message.error(res.msg)
+          return this.$message.error(res.msg);
         }
-        this.$message.success('添加成功')
-        this.addEditModal = false
-        this.getList()
-      })
-    }
-  }
-}
+        this.$message.success("添加成功");
+        this.addEditModal = false;
+        this.getList();
+      });
+    },
+  },
+};
 </script>
 
 <style lang="scss">

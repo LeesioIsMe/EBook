@@ -61,7 +61,7 @@ module.exports = {
       'beforeColon': false,
       'afterColon': true
     }],
-    'keyword-spacing': [2, {
+    'keywords-spacing': [2, {
       'before': true,
       'after': true
     }],

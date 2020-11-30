@@ -42,7 +42,7 @@ export default {
       const first = matched[0]
 
       if (!this.isStatistic(first)) {
-        matched = [{ path: '/personal', meta: { title: '首页' }}].concat(
+        matched = [{ path: '/catrgory', meta: { title: '首页' }}].concat(
           matched
         )
       }

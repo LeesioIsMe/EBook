@@ -4,21 +4,24 @@
       <el-collapse-item title="热搜榜" name="1">
         <div class="hot">
           <el-row>
-            <el-col v-for="(o, index) in 4" :key="o" :span="6" class="hot-col">
+            <el-col
+              v-for="(item, index) in hotSearchList"
+              :key="index"
+              :span="6"
+              class="hot-col"
+            >
               <el-card :body-style="{ padding: '0px' }">
                 <div class="card-info-wrapper">
                   <div class="image">
                     <img
-                      src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
+                      :src="item.cover && item.cover.split(',')[0]"
                       class="image"
-                    >
+                    />
                   </div>
                   <div style="padding: 14px">
-                    <span>好吃的汉堡</span>
+                    <span>{{ item.bookName }}</span>
                     <div class="bottom clearfix">
-                      <time class="time">{{
-                        new Date().toLocaleString()
-                      }}</time>
+                      <time class="time">{{ item.createTime }}</time>
                     </div>
                   </div>
                   <div class="btns">
@@ -27,17 +30,20 @@
                         size="mini"
                         type="primary"
                         @click="detailThis(item)"
-                      >查看</el-button>
+                        >查看</el-button
+                      >
                       <el-button
                         size="mini"
                         type="primary"
                         @click="rendThis(item)"
-                      >借阅</el-button>
+                        >借阅</el-button
+                      >
                       <el-button
                         size="mini"
                         type="success"
                         @click="downloadThis(item)"
-                      >下载</el-button>
+                        >下载</el-button
+                      >
                     </div>
                   </div>
                 </div>
@@ -49,21 +55,24 @@
       <el-collapse-item title="为您推荐" name="2">
         <div class="recommend">
           <el-row>
-            <el-col v-for="(o, index) in 4" :key="o" :span="6" class="hot-col">
+            <el-col
+              v-for="(item, index) in downloadList"
+              :key="index"
+              :span="6"
+              class="hot-col"
+            >
               <el-card :body-style="{ padding: '0px' }">
                 <div class="card-info-wrapper">
                   <div class="image">
                     <img
-                      src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
+                      :src="item.cover && item.cover.split(',')[0]"
                       class="image"
-                    >
+                    />
                   </div>
                   <div style="padding: 14px">
-                    <span>好吃的汉堡</span>
+                    <span>{{ item.bookName }}</span>
                     <div class="bottom clearfix">
-                      <time class="time">{{
-                        new Date().toLocaleString()
-                      }}</time>
+                      <time class="time">{{ item.createTime }}</time>
                     </div>
                   </div>
                   <div class="btns">
@@ -72,17 +81,20 @@
                         size="mini"
                         type="primary"
                         @click="detailThis(item)"
-                      >查看</el-button>
+                        >查看</el-button
+                      >
                       <el-button
                         size="mini"
                         type="primary"
                         @click="rendThis(item)"
-                      >借阅</el-button>
+                        >借阅</el-button
+                      >
                       <el-button
                         size="mini"
                         type="success"
                         @click="downloadThis(item)"
-                      >下载</el-button>
+                        >下载</el-button
+                      >
                     </div>
                   </div>
                 </div>
@@ -92,7 +104,13 @@
         </div>
       </el-collapse-item>
       <el-collapse-item title="图书检索" name="3">
-        <book-search :is-show-delete="false" :is-show-history="false">
+        <book-search
+          ref="bookSearch"
+          :tableUrl="'/api/book/findBookList'"
+          :tableParams="{ status: 2, upDown: 1 }"
+          :is-show-delete="false"
+          :is-show-history="false"
+        >
           <template slot="tableSlot">
             <el-table-column label="上传时间" width="150px" align="center">
               <template slot-scope="{ row }">
@@ -126,19 +144,19 @@ import {
   validUsername,
   validPhone,
   validUserNo,
-  validPassword
-} from '@/utils/validate'
-import waves from '@/directive/waves' // waves directive
-import { parseTime } from '@/utils'
-import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+  validPassword,
+} from "@/utils/validate";
+import waves from "@/directive/waves"; // waves directive
+import { parseTime } from "@/utils";
+import Pagination from "@/components/Pagination"; // secondary package based on el-pagination
 export default {
-  name: 'User',
+  name: "Catetogy",
   components: {
     Pagination,
-    'book-search': () => import('@/components/View/Book/search'),
-    'book-detail': () => import('@/components/View/Book/detail'),
-    'book-add-edit': () => import('@/components/View/Book/index'),
-    'detail-frame': () => import('@/components/View/detailFrame')
+    "book-search": () => import("@/components/View/Book/search"),
+    "book-detail": () => import("@/components/View/Book/detail"),
+    "book-add-edit": () => import("@/components/View/Book/index"),
+    "detail-frame": () => import("@/components/View/detailFrame"),
   },
   directives: { waves },
   filters: {},
@@ -151,144 +169,95 @@ export default {
       listQuery: {
         pageNum: 1,
         pageSize: 20,
-        keyword: '', categoryId: ''
+        keyword: "",
+        categoryId: "",
       },
       downloadLoading: false,
-      activeNames: ['3'],
+      activeNames: ["3"],
       isShowHistory: false,
       isShowAdd: false,
       modalData: {},
       detailModal: false,
       rendModal: false,
-      formData: {}
-    }
+      formData: {},
+      hotSearchList: [],
+      downloadList: [],
+    };
   },
   watch: {
     rendModal(newV) {
-      if (!newV) this.modalData = {}
+      if (!newV) this.modalData = {};
     },
     detailModal(newV) {
-      if (!newV) this.modalData = {}
-    }
+      if (!newV) this.modalData = {};
+    },
   },
   created() {
-    this.getList()
+    this.getHotSearchList();
+    this.getRecommendList();
   },
   mounted() {},
   methods: {
+    getHotSearchList() {
+      this.$get("/api/rank/findRanking", {
+        type: 1,
+      }).then((res) => {
+        if (res.code != 200) {
+          return this.$message.error(res.msg);
+        }
+        this.hotSearchList = res.data.filter((v, i) => i < 4);
+      });
+    },
+    getRecommendList() {
+      this.$get("/api/rank/findRanking", {
+        type: 2,
+      }).then((res) => {
+        if (res.code != 200) {
+          return this.$message.error(res.msg);
+        }
+        this.downloadList = res.data.filter((v, i) => i < 4);
+      });
+    },
     handleChange(val) {
-      console.log(val)
+      console.log(val);
     },
     detailThis(row) {
-      this.detailModal = true
-      this.modalData = row
+      this.$get("/api/book/getInfo/" + row.id).then((res) => {
+        if (res.code != 200) return this.$message.error(res.msg);
+        this.detailModal = true;
+        this.modalData = row;
+      });
     },
     rendThis(row) {
-      this.rendModal = true
-      this.modalData = row
+      this.$post("/api/book/addOrDelRecord", {
+        bookId: row.id,
+        createUser: this.$store.state.user.id,
+        type: 1,
+        delStatus: 1,
+      }).then((res) => {
+        if (res.code != 200) {
+          return this.$message.error(res.msg);
+        }
+        this.rendModal = true;
+        this.modalData = row;
+      });
     },
     downloadThis(row) {
-      this.$confirm(
-        '您确认下载当资源么, 下载记录将在"下载记录"菜单中展示',
-        '提示',
-        {
-          cancelButtonText: '取消',
-          confirmButtonText: '确定',
-          type: 'info'
-        }
-      )
-        .then((res) => {
-          this.$message.success('下载成功')
+      this.$confirm("是否要下载当前资源", "提示", {
+        confirmButtonText: "是",
+        cancelButtonText: "否",
+        type: "warning",
+      })
+        .then(() => {
+          this.downloadThisConfirm(row);
         })
         .catch(() => {
-          this.$message.info('取消下载')
-        })
+          this.$message.info("操作取消");
+        });
     },
-    handleFilter() {
-      this.listQuery.pageNum = 1
-      this.getList()
-    },
-    getList() {
-      this.listLoading = true
-      this.$get('/api/users/getAll', {
-        pageNow: this.listQuery.pageNum,
-        pageSize: this.listQuery.pageSize,
-        ...this.listQuery
-      })
-        .then((res) => {
-          this.listLoading = false
-          if (res.code != 200) {
-            return this.$notify({
-              title: '失败',
-              message: res.msg,
-              type: 'error'
-            })
-          }
-          this.list = res.data.list
-          this.total = res.data.total
-        })
-        .catch((err) => {
-          this.listLoading = false
-          this.$message({
-            message: '网络错误，请稍后再试',
-            type: 'warning'
-          })
-          console.log(err)
-        })
-    },
-    handleDownload() {
-      this.downloadLoading = true
-      import('@/vendor/Export2Excel').then((excel) => {
-        const tHeader = [
-          '用户类型',
-          '禁启用状态',
-          '用户编号',
-          '用户姓名',
-          '用户性别',
-          '头像地址',
-          '用户账号',
-          '手机号',
-          '注册时间'
-        ]
-        const filterVal = [
-          'type',
-          'status',
-          'userNo',
-          'name',
-          'gender',
-          'logo',
-          'account',
-          'phone',
-          'createTime'
-        ]
-        const data = this.formatJson(filterVal)
-        excel.export_json_to_excel({
-          header: tHeader,
-          data,
-          filename: '用户信息表'
-        })
-        this.downloadLoading = false
-      })
-    },
-    formatJson(filterVal) {
-      return this.list.map((v) =>
-        filterVal.map((j) => {
-          if (j === 'createTime') {
-            return parseTime(v[j])
-          } else if (j === 'type') {
-            return v[j] == 0 ? '管理员' : '普通用户'
-          } else if (j === 'status') {
-            return v[j] == 0 ? '禁用' : '启用'
-          } else if (j === 'gender') {
-            return v[j] == 0 ? '男' : '女'
-          } else {
-            return v[j]
-          }
-        })
-      )
-    }
-  }
-}
+    downloadThisConfirm(row) {},
+  },
+};
 </script>
 
 <style lang="scss">
@@ -321,7 +290,8 @@ export default {
     width: 100%;
     display: block;
     transition: 0.3s;
-    &:hover {
+    overflow: hidden;
+    &:hover img {
       transform: scale(1.1);
     }
   }

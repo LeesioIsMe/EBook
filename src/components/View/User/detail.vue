@@ -18,18 +18,17 @@
         <el-form-item label="性别">{{
           userInfo.sex | genderFilter
         }}</el-form-item>
+        <el-form-item label="邮箱">{{
+          userInfo.email
+        }}</el-form-item>
         <el-form-item label="出生年月">{{ userInfo.birth }}</el-form-item>
         <el-form-item label="联系电话">{{
-          userInfo.phone_number
+          userInfo.phoneNumber
         }}</el-form-item>
-        <el-form-item label="上传数量">{{ userInfo.up_number }}</el-form-item>
-        <el-form-item label="下载数量">{{ userInfo.down_number }}</el-form-item>
-        <el-form-item label="借阅数量">{{ userInfo.read_number }}</el-form-item>
+        <el-form-item label="上传数量">{{ userInfo.upCount }}</el-form-item>
+        <el-form-item label="下载数量">{{ userInfo.downCount }}</el-form-item>
         <el-form-item label="注册时间">{{
           userInfo.createTime | parseTime
-        }}</el-form-item>
-        <el-form-item label="修改时间">{{
-          userInfo.modifiedTime | parseTime
         }}</el-form-item>
       </el-form>
     </div>

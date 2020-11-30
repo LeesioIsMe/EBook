@@ -14,6 +14,7 @@
     </el-button-group>
     <div class="filter-container">
       <el-input
+        v-if="isKeywordSearch"
         v-model="listQuery.keyword"
         placeholder="资源名"
         style="width: 200px"
@@ -22,9 +23,14 @@
         @keyup.enter.native="handleFilter"
       />
       <el-cascader
-        v-model="listQuery.category"
+        v-model="listQuery.categoryId"
         :options="categoryList"
-        :props="{ checkStrictly: true }"
+        :props="{
+          label: 'name',
+          value: 'id',
+          children: 'children',
+          checkStrictly: true,
+        }"
         placeholder="图书检索"
         class="filter-item"
         clearable
@@ -36,7 +42,8 @@
         type="primary"
         icon="el-icon-search"
         @click="handleFilter"
-      >搜索</el-button>
+        >搜索</el-button
+      >
       <el-button
         v-if="isShowAdd"
         v-waves
@@ -44,7 +51,8 @@
         type="primary"
         icon="el-icon-add"
         @click="$emit('handleAdd')"
-      >添加</el-button>
+        >添加</el-button
+      >
     </div>
     <keep-alive>
       <template v-if="cardType">
@@ -59,13 +67,16 @@
               <div class="card-info-wrapper">
                 <div class="image">
                   <img
-                    src="https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-                  >
+                    :src="item.cover && item.cover.split(',')[0]"
+                    class="image"
+                  />
                 </div>
                 <div style="padding: 14px">
-                  <span>好吃的汉堡</span>
+                  <span>{{ item.bookName }}</span>
                   <div class="bottom clearfix">
-                    <time class="time">{{ new Date().toLocaleString() }}</time>
+                    <p>作者: {{ item.author || "无" }}</p>
+                    <p>出版社: {{ item.press || "无" }}</p>
+                    <slot name="cardSlot" :slot-scope="{ row: item }" />
                   </div>
                 </div>
                 <div class="btns">
@@ -74,35 +85,37 @@
                       v-if="isShowHistory"
                       size="mini"
                       @click="historyThis(item)"
-                    >历史</el-button>
+                      >历史</el-button
+                    >
                     <el-button
                       v-if="isShowDetail"
                       size="mini"
                       type="primary"
                       @click="detailThis(item)"
-                    >查看</el-button>
+                      >查看</el-button
+                    >
                     <el-button
                       v-if="isShowRend"
                       size="mini"
                       type="primary"
                       @click="rendThis(item)"
-                    >借阅</el-button>
+                      >借阅</el-button
+                    >
                     <el-button
                       v-if="isShowDownload"
                       size="mini"
                       type="success"
                       @click="downloadThis(item)"
-                    >下载</el-button>
-                    <slot
-                      :slot-scope="{ row: item }"
-                      name="operateSlotCard"
-                    />
+                      >下载</el-button
+                    >
+                    <slot :slot-scope="{ row: item }" name="operateSlotCard" />
                     <el-button
                       v-if="isShowDelete"
                       size="mini"
                       type="danger"
                       @click="deleteThis(item)"
-                    >删除</el-button>
+                      >删除</el-button
+                    >
                   </div>
                 </div>
               </div>
@@ -119,6 +132,8 @@
             border
             fit
             highlight-current-row
+            tooltip-effect="dark"
+            show-overflow-tooltip
             style="width: 100%"
           >
             <el-table-column align="center" label="序号" width="80px">
@@ -137,11 +152,11 @@
               <template slot-scope="{ row }">
                 <span>
                   <el-image
-                    v-if="row.poster"
+                    v-if="row.cover"
                     style="width: 50px; height: 50px"
-                    :src="row.poster"
+                    :src="row.cover && row.cover.split(',')[0]"
                     lazy
-                    :preview-src-list="[row.poster]"
+                    :preview-src-list="row.cover && row.cover.split(',')"
                   />
                   <span v-else>-</span>
                 </span>
@@ -149,7 +164,7 @@
             </el-table-column>
             <el-table-column label="分类" width="150px">
               <template slot-scope="{ row }">
-                <span>{{ row.category }}</span>
+                <span>{{ row.categoryName }}</span>
               </template>
             </el-table-column>
             <el-table-column label="作者" width="150px" align="center">
@@ -159,12 +174,7 @@
             </el-table-column>
             <el-table-column label="出版社" align="center" width="200px">
               <template slot-scope="{ row }">
-                <span>{{ row.publishOrgName }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="年份" width="150px" align="center">
-              <template slot-scope="{ row }">
-                <span>{{ row.year | parseTime }}</span>
+                <span>{{ row.press }}</span>
               </template>
             </el-table-column>
             <el-table-column label="备注" width="200px" align="center">
@@ -174,12 +184,12 @@
             </el-table-column>
             <el-table-column
               :show-overflow-tooltip="true"
-              label="所属用户"
+              label="上传作者"
               width="150px"
               align="center"
             >
               <template slot-scope="{ row }">
-                <span>{{ row.uploaderName }}</span>
+                <span>{{ row.createUserName }}</span>
               </template>
             </el-table-column>
             <el-table-column
@@ -194,32 +204,37 @@
                   v-if="isShowHistory"
                   size="mini"
                   @click="historyThis(row)"
-                >历史</el-button>
+                  >历史</el-button
+                >
                 <el-button
                   v-if="isShowDetail"
                   size="mini"
                   type="primary"
                   @click="detailThis(row)"
-                >查看</el-button>
+                  >查看</el-button
+                >
                 <el-button
                   v-if="isShowRend"
                   size="mini"
                   type="primary"
                   @click="rendThis(row)"
-                >借阅</el-button>
+                  >借阅</el-button
+                >
                 <el-button
                   v-if="isShowDownload"
                   size="mini"
                   type="success"
                   @click="downloadThis(row)"
-                >下载</el-button>
+                  >下载</el-button
+                >
                 <slot :slot-scope="{ row: row }" name="operateSlotTable" />
                 <el-button
                   v-if="isShowDelete"
                   size="mini"
                   type="danger"
                   @click="deleteThis(row)"
-                >删除</el-button>
+                  >删除</el-button
+                >
               </template>
             </el-table-column>
             <slot name="tableSlot" />
@@ -258,90 +273,72 @@ import {
   validUsername,
   validPhone,
   validUserNo,
-  validPassword
-} from '@/utils/validate'
-import waves from '@/directive/waves' // waves directive
-import { parseTime } from '@/utils'
-import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+  validPassword,
+} from "@/utils/validate";
+import waves from "@/directive/waves"; // waves directive
+import { parseTime } from "@/utils";
+import Pagination from "@/components/Pagination"; // secondary package based on el-pagination
 export default {
-  name: 'User',
+  name: "User",
   components: {
     Pagination,
-    'book-detail': () => import('@/components/View/Book/detail'),
-    'book-add-edit': () => import('@/components/View/Book/index'),
-    'detail-frame': () => import('@/components/View/detailFrame'),
-    'audit-history': () => import('@/components/View/Book/auditHistory')
+    "book-detail": () => import("@/components/View/Book/detail"),
+    "book-add-edit": () => import("@/components/View/Book/index"),
+    "detail-frame": () => import("@/components/View/detailFrame"),
+    "audit-history": () => import("@/components/View/Book/auditHistory"),
   },
   directives: { waves },
   filters: {},
   props: {
+    isKeywordSearch: {
+      type: Boolean,
+      default: true,
+    },
+    tableUrl: {
+      type: String,
+      default: "",
+    },
+    tableParams: {
+      type: Object,
+      default: () => {
+        return {};
+      },
+    },
     isShowHistory: {
       type: Boolean,
-      default: true
+      default: true,
     },
     isShowDetail: {
       type: Boolean,
-      default: true
+      default: true,
     },
     isShowRend: {
       type: Boolean,
-      default: true
+      default: true,
     },
     isShowDownload: {
       type: Boolean,
-      default: true
+      default: true,
     },
     isShowDelete: {
       type: Boolean,
-      default: true
+      default: true,
     },
     isShowAdd: {
       type: Boolean,
-      default: false
+      default: false,
     },
     opWidth: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   data() {
     return {
-      categoryList: [
-        {
-          id: '1',
-          label: '一级分类',
-          value: '1',
-          children: [
-            {
-              id: '1-1',
-              label: '二级分类1',
-              value: '1-1',
-              children: [
-                {
-                  id: '1-1-1',
-                  label: '三级分类1',
-                  value: '1-1-1'
-                },
-                {
-                  id: '1-1-2',
-                  label: '三级分类2',
-                  value: '1-1-2'
-                }
-              ]
-            },
-            {
-              id: '1-2',
-              label: '二级分类2',
-              value: '1-2'
-            }
-          ]
-        },
-        {
-          id: '2',
-          label: '一级分类2',
-          value: '2'
-        }
-      ],
+      categoryList:
+        (localStorage.getItem("category") &&
+          JSON.parse(localStorage.getItem("category"))) ||
+        [],
       tableKey: 0,
       list: [],
       total: 0,
@@ -349,7 +346,8 @@ export default {
       listQuery: {
         pageNum: 1,
         pageSize: 20,
-        keyword: '', categoryId: ''
+        keyword: "",
+        categoryId: "",
       },
       cardType: true,
       // 弹窗中的数据
@@ -360,9 +358,9 @@ export default {
       historyList: [],
       rendModal: false,
       formData: {},
-      title: '',
-      type: 0 // 0 添加 1 编辑
-    }
+      title: "",
+      type: 0, // 0 添加 1 编辑
+    };
   },
   computed: {
     operateWidth() {
@@ -372,99 +370,93 @@ export default {
           this.isShowDetail,
           this.isShowRend,
           this.isShowDownload,
-          this.isShowDelete
+          this.isShowDelete,
         ].filter((v) => v).length * 80
-      )
-    }
+      );
+    },
   },
   watch: {
     rendModal(newV) {
-      if (!newV) this.modalData = {}
+      if (!newV) this.modalData = {};
     },
     detailModal(newV) {
-      if (!newV) this.modalData = {}
+      if (!newV) this.modalData = {};
     },
     historyModal(newV) {
-      if (!newV) this.modalData = {}
-    }
+      if (!newV) this.modalData = {};
+    },
   },
   created() {
-    this.getList()
+    this.getList();
   },
   mounted() {},
   methods: {
     detailThis(row) {
-      this.detailModal = true
-      this.modalData = row
+      this.$get("/api/book/getInfo/" + row.id).then((res) => {
+        if (res.code != 200) return this.$message.error(res.msg);
+        this.detailModal = true;
+        this.modalData = row;
+      });
     },
     rendThis(row) {
-      this.rendModal = true
-      this.modalData = row
+      this.$post("/api/book/addOrDelRecord", {
+        bookId: row.id,
+        createUser: this.$store.state.user.id,
+        type: 1,
+        delStatus: 1,
+      }).then((res) => {
+        if (res.code != 200) {
+          return this.$message.error(res.msg);
+        }
+        this.rendModal = true;
+        this.modalData = row;
+      });
     },
     historyThis(row) {
-      this.historyModal = true
-      this.modalData = row
+      this.historyModal = true;
+      this.$get("/api/book/getBookFindingsAll/" + row.id).then((res) => {
+        this.historyList = res.data;
+      });
     },
     downloadThis(row) {
-      this.$confirm('即将下载当资源, 是否继续', '提示', {
-        cancelButtonText: '取消',
-        confirmButtonText: '确定',
-        type: 'info'
-      })
-        .then((res) => {
-          this.$message.success('下载成功')
-        })
-        .catch(() => {
-          this.$message.info('取消下载')
-        })
+      this.$emit("downloadThis", row);
     },
-    deleteThis() {
-      this.$confirm('即将删除当前记录, 是否继续', '提示', {
-        cancelButtonText: '取消',
-        confirmButtonText: '确定',
-        type: 'warning'
-      })
-        .then((res) => {
-          this.$message.success('下载成功')
-        })
-        .catch(() => {
-          this.$message.info('取消下载')
-        })
+    deleteThis(row) {
+      this.$emit("deleteThis", row);
     },
     handleFilter() {
-      this.listQuery.pageNum = 1
-      this.getList()
+      this.listQuery.pageNum = 1;
+      this.getList();
     },
     getList() {
-      this.listLoading = true
-      this.$get('/api/users/getAll', {
-        pageNow: this.listQuery.pageNum,
-        pageSize: this.listQuery.pageSize,
-        ...this.listQuery
+      this.listLoading = true;
+      var params = { ...this.listQuery };
+      params.categoryId = params.categoryId
+        ? params.categoryId[params.categoryId.length - 1]
+        : "";
+      this.$get(this.tableUrl, {
+        ...params,
+        ...this.tableParams,
       })
         .then((res) => {
-          this.listLoading = false
+          this.listLoading = false;
           if (res.code != 200) {
-            return this.$notify({
-              title: '失败',
-              message: res.msg,
-              type: 'error'
-            })
+            return this.$message.error(res.msg);
           }
-          this.list = res.data.list
-          this.total = res.data.total
+          this.list = res.data.rows;
+          this.total = res.data.total;
         })
         .catch((err) => {
-          this.listLoading = false
+          this.listLoading = false;
           this.$message({
-            message: '网络错误，请稍后再试',
-            type: 'warning'
-          })
-          console.log(err)
-        })
-    }
-  }
-}
+            message: "网络错误，请稍后再试",
+            type: "warning",
+          });
+          console.log(err);
+        });
+    },
+  },
+};
 </script>
 
 <style lang="scss">
@@ -484,7 +476,12 @@ export default {
 
   .bottom {
     margin-top: 13px;
-    line-height: 12px;
+    line-height: 16px;
+    font-size: 14px;
+    color: #999;
+    p {
+      margin: 0;
+    }
   }
 
   .button {

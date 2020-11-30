@@ -61,7 +61,7 @@ export const asyncRoutes = [
   {
     path: '/resources',
     component: Layout,
-    name: 'ResourceAudit',
+    name: 'Resource',
     redirect: '/resources/index',
     children: [
       {

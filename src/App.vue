@@ -18,4 +18,7 @@ export default {
   max-height: 65vh;
   overflow: auto;
 }
+.el-table .cell {
+  white-space: nowrap;
+}
 </style>

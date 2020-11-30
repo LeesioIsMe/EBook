@@ -2,7 +2,19 @@
   <div class="wrapper">
     <div class="book-detail">
       <div class="logo">
-        <img :src="bookData.cover" alt="预览图">
+        <el-carousel height="250px" style="width: 250px">
+          <el-carousel-item
+            v-for="item in bookData.cover && bookData.cover.split(',')"
+            :key="item"
+            style="display: flex; justify-content: center; align-items: center"
+          >
+            <el-image
+              style="max-width: 100%; max-height"
+              :src="item"
+              alt="预览图"
+            ></el-image>
+          </el-carousel-item>
+        </el-carousel>
       </div>
       <div class="info">
         <p><label>书名</label>{{ bookData.bookName }}</p>
@@ -11,12 +23,13 @@
         <p><label>图书分类</label>{{ bookData.categoryName }}</p>
         <p><label>上传作者</label>{{ bookData.createUserName }}</p>
         <p>
-          <label>审核状态</label>{{
+          <label>审核状态</label
+          >{{
             bookData.status == 1
               ? "待审核"
               : bookData.status == 2
-                ? "通过"
-                : "驳回"
+              ? "通过"
+              : "驳回"
           }}
         </p>
         <p><label>上传时间</label>{{ bookData.createTime }}</p>
@@ -36,45 +49,44 @@
 </template>
 <script>
 export default {
-  name: 'BookDetail',
+  name: "BookDetail",
   components: {
-    'audit-history': () => import('./auditHistory')
+    "audit-history": () => import("./auditHistory"),
   },
   props: {
     isShowHistory: {
       type: Boolean,
-      default: false
+      default: false,
     },
     bookData: {
       type: Object,
       default: () => {
-        return {}
-      }
-    }
+        return {};
+      },
+    },
   },
   data() {
     return {
-      historyList: []
-    }
+      historyList: [],
+    };
   },
   watch: {
-    'bookData.id'(newV) {
-      newV ? this.getHistory() : (this.historyList = [])
-    }
+    "bookData.id"(newV) {
+      newV && this.isShowHistory ? this.getHistory() : (this.historyList = []);
+    },
   },
-  created() {
-  },
+  created() {},
   mounted() {},
   methods: {
     getHistory() {
-      this.$get('/api/book/getBookFindingsAll/' + this.bookData.id).then(
+      this.$get("/api/book/getBookFindingsAll/" + this.bookData.id).then(
         (res) => {
-          this.historyList = res.data
+          this.historyList = res.data;
         }
-      )
-    }
-  }
-}
+      );
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>
@@ -97,7 +109,6 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    border: 1px solid #ccc;
     cursor: pointer;
     img {
       max-width: 100%;

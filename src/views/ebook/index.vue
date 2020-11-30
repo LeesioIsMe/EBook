@@ -29,7 +29,8 @@
         type="primary"
         icon="el-icon-search"
         @click="handleFilter"
-      >搜索</el-button>
+        >搜索</el-button
+      >
     </div>
 
     <el-table
@@ -39,6 +40,8 @@
       border
       fit
       highlight-current-row
+      
+      tooltip-effect="dark" show-overflow-tooltip
       style="width: 100%"
     >
       <el-table-column align="center" label="序号" width="80px">
@@ -64,11 +67,11 @@
         <template slot-scope="{ row }">
           <span>
             <el-image
-              v-if="row.bookUrl"
+              v-if="row.cover"
               style="width: 50px; height: 50px"
-              :src="row.bookUrl"
+              :src="row.cover && row.cover.split(',')[0]"
               lazy
-              :preview-src-list="[row.bookUrl]"
+              :preview-src-list="row.cover && row.cover.split(',')"
             />
             <span v-else>-</span>
           </span>
@@ -126,27 +129,22 @@
         class-name="small-padding fixed-width"
       >
         <template slot-scope="{ row }">
-          <el-button
-            size="mini"
-            type="primary"
-            @click="detailThis(row)"
-          >查看</el-button>
-          <el-button
-            size="mini"
-            type="warning"
-            @click="editThis(row)"
-          >修改</el-button>
+          <el-button size="mini" type="primary" @click="detailThis(row)"
+            >查看</el-button
+          >
+          <el-button size="mini" type="warning" @click="editThis(row)"
+            >修改</el-button
+          >
           <el-button
             v-if="row.status == 2"
             size="mini"
             :type="row.upDown == 1 ? 'warning' : 'success'"
             @click="upDownThis(row)"
-          >{{ row.upDown == 1 ? "下架" : "上架" }}</el-button>
-          <el-button
-            size="mini"
-            type="danger"
-            @click="deleteThis(row)"
-          >删除</el-button>
+            >{{ row.upDown == 1 ? "下架" : "上架" }}</el-button
+          >
+          <el-button size="mini" type="danger" @click="deleteThis(row)"
+            >删除</el-button
+          >
         </template>
       </el-table-column>
     </el-table>
@@ -166,7 +164,7 @@
         :title="title"
         :rules="rules"
         :modal="addEditModal"
-        :form-data="formData"
+        :formData="formData"
         @editForm="editForm"
         @closeModal="addEditModal = false"
       />
@@ -178,47 +176,47 @@ import {
   validUsername,
   validPhone,
   validUserNo,
-  validPassword
-} from '@/utils/validate'
-import waves from '@/directive/waves' // waves directive
-import { parseTime } from '@/utils'
-import Pagination from '@/components/Pagination' // secondary package based on el-pagination
+  validPassword,
+} from "@/utils/validate";
+import waves from "@/directive/waves"; // waves directive
+import { parseTime } from "@/utils";
+import Pagination from "@/components/Pagination"; // secondary package based on el-pagination
 export default {
-  name: 'User',
+  name: "EBook",
   components: {
     Pagination,
-    'book-detail': () => import('@/components/View/Book/detail'),
-    'book-add-edit': () => import('@/components/View/Book/index')
+    "book-detail": () => import("@/components/View/Book/detail"),
+    "book-add-edit": () => import("@/components/View/Book/index"),
   },
   directives: { waves },
   filters: {
     statusFilter(data, status, upDown) {
       if (status == 1) {
-        return '待审核'
+        return "待审核";
       } else if (status == 2 && upDown == 1) {
-        return '审核通过-已上架'
+        return "审核通过-已上架";
       } else if (status == 2 && upDown == 2) {
-        return '审核通过-已下架'
+        return "审核通过-已下架";
       } else {
-        return '被驳回'
+        return "被驳回";
       }
-    }
+    },
   },
   props: {
     isShowAdd: {
       type: Boolean,
-      default: true
+      default: true,
     },
     isShowHistory: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
   data() {
     return {
       categoryList:
-        (localStorage.getItem('category') &&
-          JSON.parse(localStorage.getItem('category'))) ||
+        (localStorage.getItem("category") &&
+          JSON.parse(localStorage.getItem("category"))) ||
         [],
       tableKey: 0,
       list: [],
@@ -227,8 +225,8 @@ export default {
       listQuery: {
         pageNum: 1,
         pageSize: 20,
-        keyword: '',
-        categoryId: ''
+        keyword: "",
+        categoryId: "",
       },
       // 弹窗中的数据
       rules: {},
@@ -238,139 +236,143 @@ export default {
       editModal: false,
       addEditModal: false,
       formData: {},
-      title: '',
-      type: 0 // 0 添加 1 编辑
-    }
+      title: "",
+      type: 0, // 0 添加 1 编辑
+    };
   },
   watch: {
     detailModal(newV) {
-      if (!newV) this.modalData = {}
+      if (!newV) this.modalData = {};
     },
     addEditModal(newV) {
-      if (!newV) (this.formData = {}), (this.title = ''), (this.type = 0)
-    }
+      if (!newV) (this.formData = {}), (this.title = ""), (this.type = 0);
+    },
   },
   created() {
-    this.getList()
+    this.getList();
   },
   mounted() {},
   methods: {
     editThis(row) {
-      this.$get('/api/book/getInfo/' + row.id).then((res) => {
-        this.addEditModal = true
-        this.title = '资源编辑'
-        this.type = 1
-        this.formData = res.data
-      })
+      this.$get("/api/book/getInfo/" + row.id).then((res) => {
+        this.addEditModal = true;
+        this.title = "资源编辑";
+        this.type = 1;
+        this.formData = res.data;
+      });
     },
     detailThis(row) {
-      this.detailModal = true
-      this.$get('/api/book/getInfo/' + row.id).then((res) => {
-        this.modalData = res.data
-      })
+      this.detailModal = true;
+      this.$get("/api/book/getInfo/" + row.id).then((res) => {
+        this.modalData = res.data;
+      });
     },
     upDownThis(row) {
-      this.$confirm('是否要删除下架当前资源', '提示', {
-        confirmButtonText: '是',
-        cancelButtonText: '否',
-        type: 'warning'
-      })
+      this.$confirm(
+        `是否要${row.upDown == 1 ? "下架" : "上架"}当前资源`,
+        "提示",
+        {
+          confirmButtonText: "是",
+          cancelButtonText: "否",
+          type: "warning",
+        }
+      )
         .then(() => {
-          this.upDownThisComfirm(row)
+          this.upDownThisComfirm(row);
         })
         .catch(() => {
-          this.$message.info('操作取消')
-        })
+          this.$message.info("操作取消");
+        });
     },
     upDownThisComfirm(row) {
-      this.$post('/api/book/upDown', {
+      this.$post("/api/book/upDown", {
         id: row.id,
-        upDown: row.upDown == 1 ? 2 : 1
+        upDown: row.upDown == 1 ? 2 : 1,
       }).then((res) => {
         if (res.code != 200) {
-          return this.$message.error(res.msg)
+          return this.$message.error(res.msg);
         }
-        this.$message.success((row.upDown == 1 ? '下架' : '上架') + '成功')
-        this.getList()
-      })
+        this.$message.success((row.upDown == 1 ? "下架" : "上架") + "成功");
+        this.getList();
+      });
     },
     deleteThis(row) {
-      this.$confirm('是否要删除当前资源', '提示', {
-        confirmButtonText: '是',
-        cancelButtonText: '否',
-        type: 'warning'
+      this.$confirm("是否要删除当前资源", "提示", {
+        confirmButtonText: "是",
+        cancelButtonText: "否",
+        type: "warning",
       })
         .then(() => {
-          this.deleteThisConfirm(row)
+          this.deleteThisConfirm(row);
         })
         .catch(() => {
-          this.$message.info('操作取消')
-        })
+          this.$message.info("操作取消");
+        });
     },
     deleteThisConfirm(row) {
-      this.$delete('/api/book/delete/' + row.id).then((res) => {
+      this.$delete("/api/book/delete/" + row.id).then((res) => {
         if (res.code != 200) {
-          return this.$message.error(res.msg)
+          return this.$message.error(res.msg);
         }
-        this.$message.success('删除成功')
-        this.getList()
-      })
+        this.$message.success("删除成功");
+        this.getList();
+      });
     },
     handleFilter() {
-      this.listQuery.pageNum = 1
-      this.getList()
+      this.listQuery.pageNum = 1;
+      this.getList();
     },
     getList() {
-      console.log(this.listQuery)
-      var params = { ...this.listQuery }
+      console.log(this.listQuery);
+      var params = { ...this.listQuery };
       params.categoryId = params.categoryId
         ? params.categoryId[params.categoryId.length - 1]
-        : ''
-      this.listLoading = true
-      this.$get('/api/book/findBookList', {
-        status: '',
-        ...params
+        : "";
+      this.listLoading = true;
+      this.$get("/api/book/findBookList", {
+        status: "",
+        ...params,
       })
         .then((res) => {
-          this.listLoading = false
+          this.listLoading = false;
           if (res.code != 200) {
             return this.$notify({
-              title: '失败',
+              title: "失败",
               message: res.msg,
-              type: 'error'
-            })
+              type: "error",
+            });
           }
-          this.list = res.data.rows
-          this.total = res.data.total
+          this.list = res.data.rows;
+          this.total = res.data.total;
         })
         .catch((err) => {
-          this.listLoading = false
+          this.listLoading = false;
           this.$message({
-            message: '网络错误，请稍后再试',
-            type: 'warning'
-          })
-          console.log(err)
-        })
+            message: "网络错误，请稍后再试",
+            type: "warning",
+          });
+          console.log(err);
+        });
     },
     editForm() {
-      console.log(this.formData)
-      var params = Object.assign({}, this.formData)
-      params.cover = (params.cover && params.cover.join(',')) || ''
+      console.log(this.formData);
+      var params = Object.assign({}, this.formData);
+      params.cover = (params.cover && params.cover.join(",")) || "";
       params.categoryId = params.categoryId
         ? params.categoryId[params.categoryId.length - 1]
-        : ''
-      this.$post('/api/book/edit', params).then((res) => {
-        console.log(res)
+        : "";
+      this.$post("/api/book/edit", params).then((res) => {
+        console.log(res);
         if (res.code != 200) {
-          return this.$message.error(res.msg)
+          return this.$message.error(res.msg);
         }
-        this.$message.success('编辑成功')
-        this.addEditModal = false
-        this.getList()
-      })
-    }
-  }
-}
+        this.$message.success("编辑成功");
+        this.addEditModal = false;
+        this.getList();
+      });
+    },
+  },
+};
 </script>
 
 <style lang="scss">

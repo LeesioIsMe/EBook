@@ -7,7 +7,7 @@
         :type="history.status == 1 ? '' : history.status == 2 ? 'success' : 'danger'"
         :timestamp="history.createTime"
       >
-        {{ history.content }}
+        {{ history.findings }}
       </el-timeline-item>
     </el-timeline>
     <p v-if="!historyList || (historyList && historyList.length == 0)" style="color: 999;text-align: center;">暂无记录</p>
