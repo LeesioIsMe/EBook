@@ -441,7 +441,7 @@ export default {
         this.chartYaxisData = [];
         res.data.map((v) => {
           this.chartXaxisData.push(v.sdate);
-          this.chartYaxisData.push(v.countRead);
+          this.chartYaxisData.push(v.coverRead);
         });
         this.initChart();
       });
@@ -530,6 +530,10 @@ export default {
     .box-card {
       width: 100%;
       height: 320px;
+      /deep/ .el-card__body {
+        height: 270px;
+        overflow: auto;
+      }
     }
   }
 }

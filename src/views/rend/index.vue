@@ -156,7 +156,12 @@ export default {
         });
     },
     deleteThisConfirm(row) {
-      this.$delete("/api/record/delete/" + row.id).then((res) => {
+      this.$post("/api/book/addOrDelRecord", {
+        bookId: row.id,
+        createUser: this.$store.state.user.id,
+        type: 1,
+        delStatus: 2,
+      }).then((res) => {
         if (res.code != 200) {
           return this.$message.error(res.msg);
         }

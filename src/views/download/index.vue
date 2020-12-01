@@ -7,6 +7,7 @@
       :is-show-history="false"
       :is-show-rend="false"
       @downloadThis="downloadThis"
+      @deleteThis="deleteThis"
     >
       <template slot="tableSlot">
         <el-table-column label="下载时间" width="150px" align="center">
@@ -109,12 +110,25 @@ export default {
         type: "warning",
       })
         .then(() => {
-          this.$message.success("删除成功");
-          this.$refs.bookSearch.getList();
+          this.deleteThisConfirm(row);
         })
         .catch(() => {
           this.$message.info("操作取消");
         });
+    },
+    deleteThisConfirm(row) {
+      this.$post("/api/book/addOrDelRecord", {
+        bookId: row.id,
+        createUser: this.$store.state.user.id,
+        type: 2,
+        delStatus: 2,
+      }).then((res) => {
+        if (res.code != 200) {
+          return this.$message.error(res.msg);
+        }
+        this.$message.success("删除成功");
+        this.$refs.bookSearch.getList();
+      });
     },
     downloadThis(row) {
       this.$confirm("是否要下载当前资源", "提示", {

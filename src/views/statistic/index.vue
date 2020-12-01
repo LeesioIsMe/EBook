@@ -1,37 +1,16 @@
 <template>
   <div class="statistic">
     <div class="total">
-      <el-button-group>
-        <el-button
-          size="small"
-          :type="activeType == 1 ? 'primary' : ''"
-          @click="getTotalData(1)"
-          >日</el-button
-        >
-        <el-button
-          size="small"
-          :type="activeType == 2 ? 'primary' : ''"
-          @click="getTotalData(2)"
-          >周</el-button
-        >
-        <el-button
-          size="small"
-          :type="activeType == 3 ? 'primary' : ''"
-          @click="getTotalData(3)"
-          >月</el-button
-        >
-        <el-button
-          size="small"
-          :type="activeType == 4 ? 'primary' : ''"
-          @click="getTotalData(4)"
-          >年</el-button
-        >
-      </el-button-group>
       <h3 class="total-count">
-        <span @click="getTypeChart(1)">图书总量:<i>21234324234</i></span>
-        <span @click="getTypeChart(2)">下载总量:<i>21234324234</i></span>
-        <span @click="getTypeChart(3)">借阅总量:<i>21234324234</i></span>
-        <span @click="getTypeChart(4)">上传总量:<i>21234324234</i></span>
+        <span @click="getTypeChart(1)"
+          >图书总量:<i>{{ totalCount }}</i></span
+        >
+        <span @click="getTypeChart(2)"
+          >下载总量:<i>{{ downCount }}</i></span
+        >
+        <span @click="getTypeChart(3)"
+          >借阅总量:<i>{{ readCount }}</i></span
+        >
       </h3>
     </div>
     <div class="chart">
@@ -39,45 +18,23 @@
         :id="id"
         :class="className"
         class="my-chart"
-        :style="{ height: '300px', width: '50%' }"
+        :style="{ height: '500px', width: '50%' }"
       />
       <div class="category">
         <el-card class="box-card">
           <div v-for="(v, i) in categoryList" :key="i" class="text item">
             <span>{{ v.name }}</span>
-            <span>{{ v.count || 0 }}册</span>
-          </div>
-          <div v-for="(v, i) in categoryList" :key="i" class="text item">
-            <span>{{ v.name }}</span>
-            <span>{{ v.count || 0 }}册</span>
-          </div>
-          <div v-for="(v, i) in categoryList" :key="i" class="text item">
-            <span>{{ v.name }}</span>
-            <span>{{ v.count || 0 }}册</span>
-          </div>
-          <div v-for="(v, i) in categoryList" :key="i" class="text item">
-            <span>{{ v.name }}</span>
-            <span>{{ v.count || 0 }}册</span>
-          </div>
-          <div v-for="(v, i) in categoryList" :key="i" class="text item">
-            <span>{{ v.name }}</span>
-            <span>{{ v.count || 0 }}册</span>
-          </div>
-          <div v-for="(v, i) in categoryList" :key="i" class="text item">
-            <span>{{ v.name }}</span>
-            <span>{{ v.count || 0 }}册</span>
-          </div>
-          <div v-for="(v, i) in categoryList" :key="i" class="text item">
-            <span>{{ v.name }}</span>
-            <span>{{ v.count || 0 }}册</span>
-          </div>
-          <div v-for="(v, i) in categoryList" :key="i" class="text item">
-            <span>{{ v.name }}</span>
-            <span>{{ v.count || 0 }}册</span>
-          </div>
-          <div v-for="(v, i) in categoryList" :key="i" class="text item">
-            <span>{{ v.name }}</span>
-            <span>{{ v.count || 0 }}册</span>
+            <span
+              >{{
+                v[
+                  activeType == 1
+                    ? "readCount"
+                    : activeType == 2
+                    ? "downCount"
+                    : "addCount"
+                ] || 0
+              }}册</span
+            >
           </div>
         </el-card>
       </div>
@@ -89,14 +46,14 @@
           <el-button
             style="float: right; padding: 3px 0"
             type="text"
-            @click="$router.push('/ebook')"
+            @click="$router.push('/category')"
           >
-            查看更多
+            查看更多资源
           </el-button>
         </div>
         <div v-for="(v, i) in downloadList" :key="i" class="text item">
           <span>{{ v.bookName }}</span>
-          <span>{{ v.downloadTimes || 0 }}次</span>
+          <span>{{ v.occ || 0 }}次</span>
         </div>
       </el-card>
       <el-card class="box-card">
@@ -105,14 +62,14 @@
           <el-button
             style="float: right; padding: 3px 0"
             type="text"
-            @click="$router.push('/ebook')"
+            @click="$router.push('/category')"
           >
-            查看更多
+            查看更多资源
           </el-button>
         </div>
         <div v-for="(v, i) in rendList" :key="i" class="text item">
           <span>{{ v.bookName }}</span>
-          <span>{{ v.downloadTimes || 0 }}次</span>
+          <span>{{ v.occ || 0 }}次</span>
         </div>
       </el-card>
     </div>
@@ -139,11 +96,15 @@ export default {
           JSON.parse(localStorage.getItem("category"))) ||
         [],
       chartType: 1,
+      totalCount: 0,
+      downCount: 0,
+      readCount: 0,
     };
   },
   created() {
-    this.getRankList();
-    this.getDoomByStatus();
+    this.getReadRankList();
+    this.getDownloadRankList();
+    this.getTotalData();
     this.getCategoryList();
   },
   mounted() {},
@@ -156,184 +117,49 @@ export default {
   },
   methods: {
     getTotalData(type) {
-      if (this.activeType == type) return;
-      this.activeType = type;
+      this.$get("/api/book/bookAllCount").then((res) => {
+        this.totalCount = res.code != 200 ? 0 : res.data.addCount;
+        this.readCount = res.code != 200 ? 0 : res.data.readCount;
+        this.downCount = res.code != 200 ? 0 : res.data.downCount;
+      });
     },
     getTypeChart(type) {
-      if (this.chartType == type) return;
-      this.chartType = type;
+      if (this.activeType == type) return;
+      this.activeType = type;
+      console.dir(this.chart);
+      this.chart.dispose();
+      this.initPipChart();
     },
-    getRankList() {
-      this.downloadList = [
-        {
-          id: 1,
-          bookName: "钢铁怎样练成的",
-          downloadTimes: 2500,
-        },
-        {
-          id: 2,
-          bookName: "菊花与锚",
-          downloadTimes: 102200,
-        },
-        {
-          id: 3,
-          bookName: "环球网-环球军事网",
-          downloadTimes: 10000000,
-        },
-        {
-          id: 4,
-          bookName: "舰载武器",
-          downloadTimes: 2000,
-        },
-        {
-          id: 5,
-          bookName: "制式武器",
-          downloadTimes: 100000,
-        },
-        {
-          id: 1,
-          bookName: "钢铁怎样练成的",
-          downloadTimes: 2500,
-        },
-        {
-          id: 2,
-          bookName: "菊花与锚",
-          downloadTimes: 102200,
-        },
-        {
-          id: 3,
-          bookName: "环球网-环球军事网",
-          downloadTimes: 10000000,
-        },
-        {
-          id: 4,
-          bookName: "舰载武器",
-          downloadTimes: 2000,
-        },
-        {
-          id: 5,
-          bookName: "制式武器",
-          downloadTimes: 100000,
-        },
-        {
-          id: 1,
-          bookName: "钢铁怎样练成的",
-          downloadTimes: 2500,
-        },
-        {
-          id: 2,
-          bookName: "菊花与锚",
-          downloadTimes: 102200,
-        },
-        {
-          id: 3,
-          bookName: "环球网-环球军事网",
-          downloadTimes: 10000000,
-        },
-        {
-          id: 4,
-          bookName: "舰载武器",
-          downloadTimes: 2000,
-        },
-        {
-          id: 5,
-          bookName: "制式武器",
-          downloadTimes: 100000,
-        },
-        {
-          id: 1,
-          bookName: "钢铁怎样练成的",
-          downloadTimes: 2500,
-        },
-        {
-          id: 2,
-          bookName: "菊花与锚",
-          downloadTimes: 102200,
-        },
-        {
-          id: 3,
-          bookName: "环球网-环球军事网",
-          downloadTimes: 10000000,
-        },
-        {
-          id: 4,
-          bookName: "舰载武器",
-          downloadTimes: 2000,
-        },
-        {
-          id: 5,
-          bookName: "制式武器",
-          downloadTimes: 100000,
-        },
-      ];
-      this.rendList = [
-        {
-          id: 1,
-          bookName: "钢铁怎样练成的",
-          downloadTimes: 2500,
-        },
-        {
-          id: 2,
-          bookName: "菊花与锚",
-          downloadTimes: 102200,
-        },
-        {
-          id: 3,
-          bookName: "环球网-环球军事网",
-          downloadTimes: 10000000,
-        },
-        {
-          id: 4,
-          bookName: "舰载武器",
-          downloadTimes: 2000,
-        },
-        {
-          id: 5,
-          bookName: "制式武器",
-          downloadTimes: 100000,
-        },
-      ];
+    getDownloadRankList() {
+      this.$get("/api/rank/findRanking", {
+        type: 2,
+      }).then((res) => {
+        if (res.code != 200) {
+          return this.$message.error(res.msg);
+        }
+        this.downloadList = res.data;
+      });
+    },
+    getReadRankList() {
+      this.$get("/api/rank/findRanking", {
+        type: 1,
+      }).then((res) => {
+        if (res.code != 200) {
+          return this.$message.error(res.msg);
+        }
+        this.rendList = res.data;
+      });
     },
     getCategoryList() {
-      this.categoryList = [
-        {
-          id: 1,
-          name: "社会科学",
-          count: 10000,
-        },
-        {
-          id: 1,
-          name: "自然科学",
-          count: 10000,
-        },
-        {
-          id: 1,
-          name: "人文科学",
-          count: 10000,
-        },
-        {
-          id: 1,
-          name: "新闻",
-          count: 10000,
-        },
-      ];
-    },
-    getDoomByStatus() {
-      this.$get("/api/getDoomByStatus").then((res) => {
-        if (res.code != 200) {
-          return this.$notify({
-            title: "失败",
-            message: res.msg,
-            type: "error",
-          });
-        }
-        this.pipData = res.data;
+      this.$get("/api/book/bookCategoryCount").then((res) => {
+        this.categoryList = res.data || [];
         this.initPipChart();
       });
     },
     initPipChart() {
       this.chart = echarts.init(document.getElementById(this.id));
       this.chart.setOption({
+        notMerge: true,
         tooltip: {
           trigger: "item",
           // formatter: "{a} <br/>{b} : {c} ({d}%)"
@@ -341,7 +167,19 @@ export default {
         legend: {
           left: "center",
           bottom: "10",
-          data: ["欠费停电", "正常使用"],
+          data: (this.categoryList &&
+            this.categoryList
+              .filter(
+                (v) =>
+                  (this.activeType == 1
+                    ? v.readCount
+                    : this.activeType == 2
+                    ? v.downCount
+                    : v.addCount) != 0
+              )
+              .reduce((prev, next) => prev.concat([next.name]), [])) || [
+            "暂无数据",
+          ],
         },
         series: [
           {
@@ -351,16 +189,30 @@ export default {
             radius: [80, 95],
             color: ["#65b687", "#409eff"],
             center: ["50%", "45%"],
-            data: [
-              {
-                value: this.pipData.find((v) => v.status == 0).count || 0,
-                name: "欠费停电",
-              },
-              {
-                value: this.pipData.find((v) => v.status == 1).count || 0,
-                name: "正常使用",
-              },
-            ],
+            data: this.categoryList
+              .filter(
+                (v) =>
+                  (this.activeType == 1
+                    ? v.readCount
+                    : this.activeType == 2
+                    ? v.downCount
+                    : v.addCount) != 0
+              )
+              .reduce(
+                (prev, next) =>
+                  prev.concat([
+                    {
+                      value:
+                        this.activeType == 1
+                          ? next.readCount
+                          : this.activeType == 2
+                          ? next.downCount
+                          : next.addCount,
+                      name: next.name,
+                    },
+                  ]),
+                []
+              ) || [{ value: 0, name: "暂无数据" }],
             animationEasing: "cubicInOut",
             animationDuration: 2600,
           },
@@ -382,7 +234,7 @@ export default {
   border-radius: 4px;
   .category {
     width: 50%;
-    height: 300px;
+    height: 500px;
     .box-card {
       height: 100%;
       border: none;
@@ -409,6 +261,7 @@ export default {
 }
 .total {
   .total-count {
+    margin-top: 0;
     span {
       padding: 5px 5px;
       border-radius: 4px;

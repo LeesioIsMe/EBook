@@ -113,10 +113,10 @@ export const asyncRoutes = [
     ]
   },
   {
-    path: '/catrgory',
+    path: '/category',
     component: Layout,
     name: 'Catrgory',
-    redirect: '/catrgory/index',
+    redirect: '/category/index',
     children: [
       {
         path: 'index',

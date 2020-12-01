@@ -110,6 +110,7 @@
           :tableParams="{ status: 2, upDown: 1 }"
           :is-show-delete="false"
           :is-show-history="false"
+          @downloadThis="downloadThis"
         >
           <template slot="tableSlot">
             <el-table-column label="上传时间" width="150px" align="center">
@@ -255,7 +256,32 @@ export default {
           this.$message.info("操作取消");
         });
     },
-    downloadThisConfirm(row) {},
+    downloadThisConfirm(row) {
+      this.$post("/api/book/addOrDelRecord", {
+        bookId: row.id,
+        createUser: this.$store.state.user.id,
+        type: 2,
+        delStatus: 1,
+      }).then((res) => {
+        if (res.code != 200) {
+          return this.$message.error(res.msg);
+        }
+        var a = document.createElement("a");
+        if (document.createEvent) {
+          var evObj = document.createEvent("MouseEvents");
+          evObj.initEvent("click", true, false);
+          a.href = row.bookUrl;
+          a.download = "";
+          a.target = "_blank";
+          a.dispatchEvent(evObj);
+          console.log("wdawd");
+        } else if (document.createEventObject) {
+          a.fireEvent("onclick");
+        }
+        this.$message.success("下载成功");
+        this.$refs.bookSearch.getList();
+      });
+    },
   },
 };
 </script>
